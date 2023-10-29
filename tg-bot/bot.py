@@ -85,6 +85,7 @@ def _protect_for_html(text_data):
                     .replace('<', '&lt;')\
                     .replace('>', '&gt;')
 
+@validate_user
 async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
@@ -116,6 +117,7 @@ async def archive_n_pages(count=1):
     for p in results["results"]:
         await notion.pages.update(page_id=p['id'], archived=True)
 
+@validate_user
 async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     try:
