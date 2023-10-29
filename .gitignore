@@ -160,12 +160,4 @@ cython_debug/
 #.idea/
 
 # This project:
-.venv
 tg-bot/config.py
-
-# This project:
-.venv
-tg-bot/config.py
-
-# This project:
-.venv
