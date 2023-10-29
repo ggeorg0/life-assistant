@@ -162,3 +162,10 @@ cython_debug/
 # This project:
 .venv
 tg-bot/config.py
+
+# This project:
+.venv
+tg-bot/config.py
+
+# This project:
+.venv
