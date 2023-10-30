@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, time, timezone, timedelta
 import asyncio
 from random import shuffle
 
@@ -8,7 +8,8 @@ from telegram.ext import (ApplicationBuilder,
                           CommandHandler, 
                           ContextTypes, 
                           MessageHandler,
-                          filters)
+                          filters,
+                          Defaults)
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
@@ -20,6 +21,9 @@ from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
 
 from plugins import PluginManager
+
+TZONE = timezone(timedelta(hours=3))
+
 
 notion: AsyncClient
 plugin_manager: PluginManager
@@ -205,41 +209,45 @@ def gather_base_summary(calendar, current_tasks):
     lines[-1] = lines[-1] + '\n'
     return lines
 
-async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
+async def gather_morning_message():
     calendar = await calendar_events()
     tasks = await current_tasks()
     message_data = gather_base_summary(calendar, tasks)
     plugin_manager.plugins_apply(message_data)
-    message = "\n".join(message_data)
-    await context.bot.send_message(chat_id, message, parse_mode='HTML')
+    return "\n".join(message_data)
 
-# TODO:
-# Daily Messages with tasks
-#   - Morning message:
-#        Greetengs!
-#        Calendar activites
-#        3 random tasks
-#   - Evening message
-#        Calendar activites
-#        Most long live task to do fist tomorrow
+async def send_morning_message(context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(TG_TARGET_ID, 
+                                   await gather_morning_message(),
+                                   parse_mode='HTML')
 
-# TODO:
-# All Current tasks
+@validate_user
+async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await context.bot.send_message(update.effective_chat.id,
+                                   await gather_morning_message(),
+                                   parse_mode='HTML')
 
-# TODO:
-# Get random task to inbox from do later
+@validate_user
+async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    tasks = current_tasks()
+    shuffle(tasks)
+    context.bot.send_message(chat_id, tasks[0])
+    
 
 if __name__ == "__main__":
     notion = AsyncClient(auth=INTEGRATION_TOKEN)
 
     plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    defaults = Defaults(tzinfo=TZONE)
+    app = ApplicationBuilder().token(BOT_TOKEN).defaults(defaults).build()
     app.add_handler(CommandHandler("inbox", last_tasks))
     app.add_handler(CommandHandler("del", delete_last_n))
     app.add_handler(CommandHandler("morning", morning_message))
-
+    app.add_handler(CommandHandler('rtask', random_current_task))
+    app.job_queue.run_daily(send_morning_message, 
+                            time(hour=8, minute=30),
+                            name='morning_message')
     app.add_handler(MessageHandler(filters.TEXT, insert_into_notion))
     app.run_polling()
-
