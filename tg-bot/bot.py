@@ -1,4 +1,7 @@
 import logging
+from datetime import datetime
+import asyncio
+from random import shuffle
 
 from telegram import Update
 from telegram.ext import (ApplicationBuilder, 
@@ -8,19 +11,23 @@ from telegram.ext import (ApplicationBuilder,
                           filters)
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
-from notion_client.helpers import iterate_paginated_api, is_full_page
+from notion_client.helpers import async_iterate_paginated_api, is_full_page
 
 from config import BOT_TOKEN, INTEGRATION_TOKEN
-from config import TARGET_ID, INBOX_DATABASE_ID
+from config import TG_TARGET_ID, INBOX_DATABASE_ID
+from config import CALENDAR_DATABASE_ID
+from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
 
+from plugins import PluginManager
 
 notion: AsyncClient
+plugin_manager: PluginManager
 
 
 def validate_user(func):
     async def wrapper(update: Update, *args, **kwargs):
-        if update.effective_chat.id == TARGET_ID:
+        if update.effective_chat.id == TG_TARGET_ID:
             return await func(update, *args, **kwargs)
         
     return wrapper
@@ -43,6 +50,7 @@ async def _call_api_when_available(notion_api_action: callable,
             raise APIResponseError
         context.job_queue.run_once(_call_api_when_available, 
                                    timing,
+                                   name='pending_notion_api',
                                    job_kwargs={"notion_api_action": notion_api_action,
                                                "context": context,
                                                "depth": depth + 1})
@@ -76,6 +84,7 @@ async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE)
             raise APIResponseError
         context.job_queue.run_once(_call_api_when_available,
                                    timing,
+                                   name='pending_notion_api',
                                    job_kwargs={"notion_api_action": create_notion_page,
                                                "context": context,
                                                "depth": 1})
@@ -132,13 +141,104 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except ValueError:
         await context.bot.send_message(chat_id, "Invalid number of pages"
                                                 "(Should be > 1 and <= 10)")
+        
+async def calendar_events():
+    events = []
+    async for block in async_iterate_paginated_api(
+        notion.databases.query, database_id=CALENDAR_DATABASE_ID
+    ):
+        for p in block:
+            event = {}
+            props = p["properties"]
+            if props["Name"]["title"]:
+                event['title'] = props["Name"]["title"][0]['plain_text']
+                date = props["Date"]['date']
+                if date:
+                    event['start'] = datetime.fromisoformat(date['start'])
+                    event['end'] = date['end']
+                    if event['end']:
+                        event['end'] = datetime.fromisoformat(event['end'])
+                    events.append(event)
+    return events
+
+async def current_tasks():
+    tasks = []
+    async for block in async_iterate_paginated_api(
+        notion.databases.query, database_id=CURRENT_TASKS_ID
+    ):
+        for p in block:
+            props = p["properties"]
+            if props["Name"]["title"]:
+                tasks.append( props["Name"]["title"][0]['plain_text'])
+    return tasks
+
+def _fmt_event_time(event):
+    result = ''
+    if event['end']:
+        result = event['start'].strftime(" %d/%m")
+    if event['start'].hour or event['start'].minute:
+        result = result + event['start'].strftime(" %H:%M")
+    if event['end']:
+        result = result + event['end'].strftime(" — %d/%m")
+        if event['end'].hour or event['end'].minute:
+            result = result + event['end'].strftime(" %H:%M")
+    return result
+
+def gather_base_summary(calendar, current_tasks):
+    lines = []
+    events = [] 
+    now = datetime.now()
+    for event in calendar:
+        if now.date() == event['start'].date() or (now.date() >= event['start'].date()
+                                                   and event['end']
+                                                   and event['end'].date() >= now.date()):
+            line = ' > ' + event['title'] + _fmt_event_time(event)
+            events.append(_protect_for_html(line))
+    if events:
+        lines.append("<b>События календаря:</b>")
+        events[-1] = events[-1] + '\n'
+        lines += events
+    lines.append('<b>5 случайных текущих задач:</b>')
+    shuffle(current_tasks)
+    for task in current_tasks[:5]:
+        lines.append(_protect_for_html(' > ' + task))
+    lines[-1] = lines[-1] + '\n'
+    return lines
+
+async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    calendar = await calendar_events()
+    tasks = await current_tasks()
+    message_data = gather_base_summary(calendar, tasks)
+    plugin_manager.plugins_apply(message_data)
+    message = "\n".join(message_data)
+    await context.bot.send_message(chat_id, message, parse_mode='HTML')
+
+# TODO:
+# Daily Messages with tasks
+#   - Morning message:
+#        Greetengs!
+#        Calendar activites
+#        3 random tasks
+#   - Evening message
+#        Calendar activites
+#        Most long live task to do fist tomorrow
+
+# TODO:
+# All Current tasks
+
+# TODO:
+# Get random task to inbox from do later
 
 if __name__ == "__main__":
     notion = AsyncClient(auth=INTEGRATION_TOKEN)
 
+    plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
+
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("inbox", last_tasks))
     app.add_handler(CommandHandler("del", delete_last_n))
+    app.add_handler(CommandHandler("morning", morning_message))
 
     app.add_handler(MessageHandler(filters.TEXT, insert_into_notion))
     app.run_polling()
