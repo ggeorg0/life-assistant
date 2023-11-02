@@ -2,3 +2,4 @@ pytest
 python-telegram-bot[job-queue]
 psycopg2-binary
 notion-client
+python-dotenv
