@@ -22,6 +22,10 @@ from config import DEPTH_LIMIT, PAGE_SIZE
 
 from plugins import PluginManager
 
+logging.basicConfig(
+        format='%(asctime)s %(levelname)s %(name)s - %(message)s',
+        level=logging.WARN)
+
 TZONE = timezone(timedelta(hours=3))
 
 
@@ -100,7 +104,6 @@ def _protect_for_html(text_data):
 
 @validate_user
 async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
     try:
         results = await notion.databases.query(database_id=INBOX_DATABASE_ID, 
                                                sorts=[{"property": "Created",
@@ -230,10 +233,10 @@ async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @validate_user
 async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    tasks = current_tasks()
+    tasks = await current_tasks()
     shuffle(tasks)
-    context.bot.send_message(chat_id, tasks[0])
-    
+    await context.bot.send_message(chat_id, tasks[0])
+
 
 if __name__ == "__main__":
     notion = AsyncClient(auth=INTEGRATION_TOKEN)
