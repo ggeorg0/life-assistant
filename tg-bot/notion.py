@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
@@ -9,18 +9,14 @@ from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
 
+from tools import _protect_for_html
+
 
 class Notion():
     _client: AsyncClient
 
     def __init__(self, token) -> None:
         self._client = AsyncClient(auth=token)
-
-    def _protect_for_html(text_data):
-        return text_data.replace('&', '&amp;')\
-                        .replace('<', '&lt;')\
-                        .replace('>', '&gt;')
-
 
     async def create_page_in_inbox(self, title: str):
         return await self._client.pages.create(

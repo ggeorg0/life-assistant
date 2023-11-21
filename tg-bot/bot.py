@@ -22,6 +22,7 @@ from config import DEPTH_LIMIT, PAGE_SIZE
 
 from plugins import PluginManager
 from notion import Notion
+from tools import _protect_for_html
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)s %(name)s - %(message)s',
@@ -99,11 +100,6 @@ async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE)
                                                "context": context,
                                                "depth": 1})
         
-def _protect_for_html(text_data):
-    return text_data.replace('&', '&amp;')\
-                    .replace('<', '&lt;')\
-                    .replace('>', '&gt;')
-
 @validate_user
 async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
@@ -226,11 +222,16 @@ async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE
     shuffle(tasks)
     await context.bot.send_message(chat_id, tasks[0])
 
+@validate_user
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    context.bot.send_message
+    raise NotImplementedError
+    # TODO
 
 if __name__ == "__main__":
     # notion = AsyncClient(auth=INTEGRATION_TOKEN)
 
-    nnotion = Notion(auth=INTEGRATION_TOKEN)
+    nnotion = Notion(token=INTEGRATION_TOKEN)
 
     plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
 
@@ -240,6 +241,7 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("del", delete_last_n))
     app.add_handler(CommandHandler("morning", morning_message))
     app.add_handler(CommandHandler('rtask', random_current_task))
+    app.add_handler(CommandHandler('help', help))
     app.job_queue.run_daily(send_morning_message, 
                             time(hour=8, minute=30),
                             name='morning_message')
