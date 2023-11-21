@@ -110,14 +110,6 @@ async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except APIResponseError as error:
         context.bot.send_message(f"Error (code={error.code}). Try again later.")
 
-# async def archive_n_pages(count=1):
-#     results = await notion.databases.query(database_id=INBOX_DATABASE_ID, 
-#                                            sorts=[{"property": "Created",
-#                                                    "direction": "descending"}],
-#                                            page_size=count)
-#     for p in results["results"]:
-#         await notion.pages.update(page_id=p['id'], archived=True)
-
 @validate_user
 async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -134,36 +126,6 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id, "Invalid number of pages"
                                                 "(Should be > 1 and <= 10)")
         
-# async def calendar_events():
-#     events = []
-#     async for block in async_iterate_paginated_api(
-#         notion.databases.query, database_id=CALENDAR_DATABASE_ID
-#     ):
-#         for p in block:
-#             event = {}
-#             props = p["properties"]
-#             if props["Name"]["title"]:
-#                 event['title'] = props["Name"]["title"][0]['plain_text']
-#                 date = props["Date"]['date']
-#                 if date:
-#                     event['start'] = datetime.fromisoformat(date['start'])
-#                     event['end'] = date['end']
-#                     if event['end']:
-#                         event['end'] = datetime.fromisoformat(event['end'])
-#                     events.append(event)
-#     return events
-
-# async def current_tasks():
-#     tasks = []
-#     async for block in async_iterate_paginated_api(
-#         notion.databases.query, database_id=CURRENT_TASKS_ID
-#     ):
-#         for p in block:
-#             props = p["properties"]
-#             if props["Name"]["title"]:
-#                 tasks.append( props["Name"]["title"][0]['plain_text'])
-#     return tasks
-
 def _fmt_event_time(event):
     result = ''
     if event['end']:
@@ -229,8 +191,6 @@ async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # TODO
 
 if __name__ == "__main__":
-    # notion = AsyncClient(auth=INTEGRATION_TOKEN)
-
     nnotion = Notion(token=INTEGRATION_TOKEN)
 
     plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
