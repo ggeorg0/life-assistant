@@ -21,6 +21,7 @@ from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
 
 from plugins import PluginManager
+from notion import Notion
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)s %(name)s - %(message)s',
@@ -29,7 +30,8 @@ logging.basicConfig(
 TZONE = timezone(timedelta(hours=3))
 
 
-notion: AsyncClient
+# notion: AsyncClient
+nnotion: Notion
 plugin_manager: PluginManager
 
 
@@ -63,19 +65,19 @@ async def _call_api_when_available(notion_api_action: callable,
                                                "context": context,
                                                "depth": depth + 1})
 
-async def _create_page(title: str):
-    return await notion.pages.create(
-        parent={'database_id': INBOX_DATABASE_ID},
-        properties={
-            'Name': {
-            'title': [{'text': {'content': title}}]
-        }, 
-    })
+# async def _create_page(title: str):
+#     return await notion.pages.create(
+#         parent={'database_id': INBOX_DATABASE_ID},
+#         properties={
+#             'Name': {
+#             'title': [{'text': {'content': title}}]
+#         }, 
+#     })
 
 @validate_user
 async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    create_notion_page = lambda: _create_page(update.effective_message.text)
+    create_notion_page = lambda: nnotion.create_page_in_inbox(update.effective_message.text)
     try:
         await create_notion_page()
         await update.effective_message.reply_text("added to Notion")
@@ -105,33 +107,20 @@ def _protect_for_html(text_data):
 @validate_user
 async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        results = await notion.databases.query(database_id=INBOX_DATABASE_ID, 
-                                               sorts=[{"property": "Created",
-                                                       "direction": "descending"}],
-                                               page_size=PAGE_SIZE)
-        titles = ["<b>List of tasks</b>"]
-        for i, task in enumerate(results["results"]):
-            if is_full_page(task):
-                task_title = task["properties"]["Name"]["title"]
-                if task_title:
-                    line = f"{i + 1}. {task_title[0]['plain_text']}"
-                    titles.append(_protect_for_html(line))
-        if results["next_cursor"] != None:
-            titles.append("<b>Visit Notion to see full list...</b>")
-        titles = "\n".join(titles)
+        titles = await nnotion.last_inbox_pages()
         await context.bot.send_message(chat_id=update.effective_chat.id, 
-                                       text=titles, 
+                                       text="\n".join(titles), 
                                        parse_mode='HTML')
     except APIResponseError as error:
         context.bot.send_message(f"Error (code={error.code}). Try again later.")
 
-async def archive_n_pages(count=1):
-    results = await notion.databases.query(database_id=INBOX_DATABASE_ID, 
-                                           sorts=[{"property": "Created",
-                                                   "direction": "descending"}],
-                                           page_size=count)
-    for p in results["results"]:
-        await notion.pages.update(page_id=p['id'], archived=True)
+# async def archive_n_pages(count=1):
+#     results = await notion.databases.query(database_id=INBOX_DATABASE_ID, 
+#                                            sorts=[{"property": "Created",
+#                                                    "direction": "descending"}],
+#                                            page_size=count)
+#     for p in results["results"]:
+#         await notion.pages.update(page_id=p['id'], archived=True)
 
 @validate_user
 async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -140,7 +129,7 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
         num_of_pages = int(context.args[0])
         if num_of_pages > 10:
             raise ValueError
-        await archive_n_pages(num_of_pages)
+        await nnotion.archive_n_pages(num_of_pages)
         await context.bot.send_message(chat_id, f"{num_of_pages} pages have been deleted")
     except APIResponseError:
         await context.bot.send_message(chat_id, "Some pages could not be deleted. "
@@ -149,35 +138,35 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id, "Invalid number of pages"
                                                 "(Should be > 1 and <= 10)")
         
-async def calendar_events():
-    events = []
-    async for block in async_iterate_paginated_api(
-        notion.databases.query, database_id=CALENDAR_DATABASE_ID
-    ):
-        for p in block:
-            event = {}
-            props = p["properties"]
-            if props["Name"]["title"]:
-                event['title'] = props["Name"]["title"][0]['plain_text']
-                date = props["Date"]['date']
-                if date:
-                    event['start'] = datetime.fromisoformat(date['start'])
-                    event['end'] = date['end']
-                    if event['end']:
-                        event['end'] = datetime.fromisoformat(event['end'])
-                    events.append(event)
-    return events
+# async def calendar_events():
+#     events = []
+#     async for block in async_iterate_paginated_api(
+#         notion.databases.query, database_id=CALENDAR_DATABASE_ID
+#     ):
+#         for p in block:
+#             event = {}
+#             props = p["properties"]
+#             if props["Name"]["title"]:
+#                 event['title'] = props["Name"]["title"][0]['plain_text']
+#                 date = props["Date"]['date']
+#                 if date:
+#                     event['start'] = datetime.fromisoformat(date['start'])
+#                     event['end'] = date['end']
+#                     if event['end']:
+#                         event['end'] = datetime.fromisoformat(event['end'])
+#                     events.append(event)
+#     return events
 
-async def current_tasks():
-    tasks = []
-    async for block in async_iterate_paginated_api(
-        notion.databases.query, database_id=CURRENT_TASKS_ID
-    ):
-        for p in block:
-            props = p["properties"]
-            if props["Name"]["title"]:
-                tasks.append( props["Name"]["title"][0]['plain_text'])
-    return tasks
+# async def current_tasks():
+#     tasks = []
+#     async for block in async_iterate_paginated_api(
+#         notion.databases.query, database_id=CURRENT_TASKS_ID
+#     ):
+#         for p in block:
+#             props = p["properties"]
+#             if props["Name"]["title"]:
+#                 tasks.append( props["Name"]["title"][0]['plain_text'])
+#     return tasks
 
 def _fmt_event_time(event):
     result = ''
@@ -213,8 +202,8 @@ def gather_base_summary(calendar, current_tasks):
     return lines
 
 async def gather_morning_message():
-    calendar = await calendar_events()
-    tasks = await current_tasks()
+    calendar = await nnotion.today_calendar_events()
+    tasks = await nnotion.current_tasks()
     message_data = gather_base_summary(calendar, tasks)
     plugin_manager.plugins_apply(message_data)
     return "\n".join(message_data)
@@ -233,13 +222,15 @@ async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 @validate_user
 async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    tasks = await current_tasks()
+    tasks = await nnotion.current_tasks()
     shuffle(tasks)
     await context.bot.send_message(chat_id, tasks[0])
 
 
 if __name__ == "__main__":
-    notion = AsyncClient(auth=INTEGRATION_TOKEN)
+    # notion = AsyncClient(auth=INTEGRATION_TOKEN)
+
+    nnotion = Notion(auth=INTEGRATION_TOKEN)
 
     plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
 
