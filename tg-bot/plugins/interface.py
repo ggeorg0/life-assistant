@@ -1,4 +1,13 @@
-class MorningMsgPlugin:
+from abc import ABCMeta, abstractmethod, abstractproperty
+from typing import Sequence, Callable, Awaitable, Any 
+from datetime import datetime
+
+MessageCallback = tuple[datetime, Callable[..., Awaitable[str]], str]
+ActionsCallback = tuple[datetime, Callable[..., Awaitable[Any]], str]
+
+# depricated
+# TODO: delete this class later
+class MorningMsgPlugin(metaclass=ABCMeta):
     _enabled: bool
     _name: str
 
@@ -10,6 +19,7 @@ class MorningMsgPlugin:
         if self.enabled:
             return self._process_message(message)
 
+    @abstractmethod
     def _process_message(self, message: list[str]):
         raise NotImplementedError("Subclasses must implement this method")
     
@@ -24,3 +34,33 @@ class MorningMsgPlugin:
     @enabled.setter
     def enabled(self, value: bool):
         self._enabled = value
+
+
+class AbstractPlugin(metaclass=ABCMeta):
+    _enabled: bool
+    _name: str
+
+    def __init__(self, name="defaultname") -> None:
+        self._enabled = True
+        self._name = name
+
+    @abstractproperty
+    def message_callabacks(self) -> tuple[MessageCallback, ...]:
+        raise NotImplementedError
+
+    @abstractproperty
+    def actions_callbacks(self) -> tuple[ActionsCallback, ...]:
+        raise NotImplementedError
+
+    @property
+    def name(self) -> str:
+        return self._name
+    
+    @property
+    def enabled(self) -> bool:
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool):
+        self._enabled = value
+
