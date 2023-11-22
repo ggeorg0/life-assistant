@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, time, timezone, timedelta
 import asyncio
 from random import shuffle
+from typing import Callable
 
 from telegram import Update
 from telegram.ext import (ApplicationBuilder, 
@@ -9,7 +10,9 @@ from telegram.ext import (ApplicationBuilder,
                           ContextTypes, 
                           MessageHandler,
                           filters,
-                          Defaults)
+                          Defaults,
+                          CallbackContext,
+                          JobQueue)
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
@@ -22,7 +25,7 @@ from config import DEPTH_LIMIT, PAGE_SIZE
 
 from plugins import PluginManager
 from notion import Notion
-from tools import _protect_for_html
+from tools import protect_for_html
 
 logging.basicConfig(
         format='%(asctime)s %(levelname)s %(name)s - %(message)s',
@@ -30,6 +33,15 @@ logging.basicConfig(
 
 TZONE = timezone(timedelta(hours=3))
 
+
+HELP_MESSAGE = """Бот системы продуктивности.
+- /inbox - показать задачи в корзине
+- /del n - удалить последние n задач из корзины
+- /morning - показать утренее сообщение сейчас
+- /rtask - случайная задача из Current Tasks
+- /help - показать это сообщение
+- /reschedule_notifications - удалить и создать заново отложенные уведомления расширений и плагинов
+"""
 
 # notion: AsyncClient
 nnotion: Notion
@@ -65,15 +77,6 @@ async def _call_api_when_available(notion_api_action: callable,
                                    job_kwargs={"notion_api_action": notion_api_action,
                                                "context": context,
                                                "depth": depth + 1})
-
-# async def _create_page(title: str):
-#     return await notion.pages.create(
-#         parent={'database_id': INBOX_DATABASE_ID},
-#         properties={
-#             'Name': {
-#             'title': [{'text': {'content': title}}]
-#         }, 
-#     })
 
 @validate_user
 async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -147,7 +150,7 @@ def gather_base_summary(calendar, current_tasks):
                                                    and event['end']
                                                    and event['end'].date() >= now.date()):
             line = ' > ' + event['title'] + _fmt_event_time(event)
-            events.append(_protect_for_html(line))
+            events.append(protect_for_html(line))
     if events:
         lines.append("<b>События календаря:</b>")
         events[-1] = events[-1] + '\n'
@@ -155,7 +158,7 @@ def gather_base_summary(calendar, current_tasks):
     lines.append('<b>5 случайных текущих задач:</b>')
     shuffle(current_tasks)
     for task in current_tasks[:5]:
-        lines.append(_protect_for_html(' > ' + task))
+        lines.append(protect_for_html(' > ' + task))
     lines[-1] = lines[-1] + '\n'
     return lines
 
@@ -186,12 +189,74 @@ async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 @validate_user
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    context.bot.send_message
-    raise NotImplementedError
-    # TODO
+    chat_id = update.effective_chat.id
+    await context.bot.send_message(chat_id, protect_for_html(HELP_MESSAGE)) 
+
+async def send_custom_message(context: CallbackContext):
+    # TODO: ~Callable[[TYPE], Awaitable[TYPE]] type hint
+    """send a message callback. \n
+    Use `data` argument to pass another callback that return `str` (text of message), 
+    when you passing this function to `Application.job_queue` \n
+    Example:
+    ```
+    def my_text():
+        return "text of my scheduled message"
+
+    job_queue.run_daily(send_custom_message,
+                        time(hour=17, minute=00),
+                        data=my_text)
+    ```
+    """
+    if context.job and isinstance(context.job.data, Callable):
+        message = await context.job.data()
+    else:
+        logging.error("context.job.data is not Callable"
+                      f"job.name=({context.job.name})")
+        return
+    if message:
+        await context.bot.send_message(TG_TARGET_ID, message)
+    else:
+        logging.error("Trying to send empty message "
+                      f"job.name=({context.job.name})")
+        
+def reschedule_plugin_actions(job_queue: JobQueue):
+    for plg in plugin_manager.loaded_plugins:
+        for plg_job in job_queue.get_jobs_by_name(plg.name):
+            plg_job.schedule_removal()
+        for dt, m_callback, period in plg.message_callabacks:
+            match period:
+                case "daily":
+                    job_queue.run_daily(send_custom_message, time=dt.time,
+                                        name=plg.name, data=m_callback)
+                case "once":
+                    job_queue.run_once(send_custom_message, when=dt,
+                                       name=plg.name, data=m_callback)
+                case "monthly":
+                    job_queue.run_monthly(send_custom_message, when=dt.time,
+                                          day=dt.day, data=m_callback)
+        for dt, act_callback, period in plg.actions_callbacks:
+            match period:
+                case "daily":
+                    job_queue.run_daily(act_callback, time=dt.time,
+                                        name=plg.name)
+                case "once":
+                    job_queue.run_once(act_callback, when=dt,
+                                       name=plg.name)
+                case "monthly":
+                    job_queue.run_monthly(act_callback, when=dt.time,
+                                          day=dt.day)
+
+@validate_user                    
+async def reschedule(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    try:
+        reschedule_plugin_actions(context.job_queue)
+    except Exception as exc:
+        await context.bot.send_message(chat_id, str(exc))
+
 
 if __name__ == "__main__":
-    nnotion = Notion(token=INTEGRATION_TOKEN)
+    nnotion = Notion()
 
     plugin_manager = PluginManager("tg-bot/plugins").load_plugins()
 
@@ -202,8 +267,9 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("morning", morning_message))
     app.add_handler(CommandHandler('rtask', random_current_task))
     app.add_handler(CommandHandler('help', help))
-    app.job_queue.run_daily(send_morning_message, 
-                            time(hour=8, minute=30),
-                            name='morning_message')
+    app.add_handler(CommandHandler('reschedule_notifications', reschedule))
+
+    reschedule_plugin_actions(app.job_queue)
+
     app.add_handler(MessageHandler(filters.TEXT, insert_into_notion))
     app.run_polling()
