@@ -207,7 +207,8 @@ async def send_custom_message(context: CallbackContext):
                         data=my_text)
     ```
     """
-    if context.job and isinstance(context.job.data, Callable):
+    # if not context.job: return
+    if isinstance(context.job.data, Callable):
         message = await context.job.data()
     else:
         logging.error("context.job.data is not Callable"
@@ -217,6 +218,28 @@ async def send_custom_message(context: CallbackContext):
         await context.bot.send_message(TG_TARGET_ID, message)
     else:
         logging.error("Trying to send empty message "
+                      f"job.name=({context.job.name})")
+        
+async def do_custom_action(context: CallbackContext):
+    """bot wrapper of callback of plugin action. \n
+    Use `data` argument to plugin callback, 
+    when you passing this function to `Application.job_queue` \n
+    Example:
+    ```
+    def my_action():
+        # whatever is here
+        ...
+
+    job_queue.run_daily(do_custom_action,
+                        time(hour=17, minute=00),
+                        data=my_action)
+    ```
+    """
+    # if not context.job: return
+    if isinstance(context.job.data, Callable):
+        await context.job.data()
+    else:
+        logging.error("context.job.data is not Callable"
                       f"job.name=({context.job.name})")
         
 def reschedule_plugin_actions(job_queue: JobQueue):
@@ -237,14 +260,15 @@ def reschedule_plugin_actions(job_queue: JobQueue):
         for dt, act_callback, period in plg.actions_callbacks:
             match period:
                 case "daily":
-                    job_queue.run_daily(act_callback, time=dt.time,
-                                        name=plg.name)
+                    job_queue.run_daily(do_custom_action, time=dt.time,
+                                        name=plg.name, data=act_callback)
                 case "once":
-                    job_queue.run_once(act_callback, when=dt,
-                                       name=plg.name)
+                    job_queue.run_once(do_custom_action, when=dt,
+                                       name=plg.name, data=act_callback)
                 case "monthly":
-                    job_queue.run_monthly(act_callback, when=dt.time,
-                                          day=dt.day)
+                    job_queue.run_monthly(do_custom_action, when=dt.time,
+                                          day=dt.day, name=plg.name,
+                                          data=act_callback)
 
 @validate_user                    
 async def reschedule(update: Update, context: ContextTypes.DEFAULT_TYPE):
