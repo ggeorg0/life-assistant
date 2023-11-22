@@ -8,15 +8,17 @@ from config import TG_TARGET_ID, INBOX_DATABASE_ID
 from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
+from config import PAIR_SCHEDULE, UNI_SCHEDULE
 
-from tools import _protect_for_html
+from tools import protect_for_html, singleton
 
 
+@singleton
 class Notion():
     _client: AsyncClient
 
-    def __init__(self, token) -> None:
-        self._client = AsyncClient(auth=token)
+    def __init__(self) -> None:
+        self._client = AsyncClient(auth=INTEGRATION_TOKEN)
 
     async def create_page_in_inbox(self, title: str):
         return await self._client.pages.create(
@@ -38,7 +40,7 @@ class Notion():
                 task_title = task["properties"]["Name"]["title"]
                 if task_title:
                     line = f"{i + 1}. {task_title[0]['plain_text']}"
-                    titles.append(_protect_for_html(line))
+                    titles.append(protect_for_html(line))
         if results["next_cursor"] != None:
             titles.append("<b>Visit Notion to see full list...</b>")
         return titles
@@ -80,6 +82,19 @@ class Notion():
                 if props["Name"]["title"]:
                     tasks.append( props["Name"]["title"][0]['plain_text'])
         return tasks
+    
+    async def uni_schedule(self): 
+        results = self._client.databases.query(database_id=UNI_SCHEDULE)
+        weekday = datetime.today().weekday()
+        daily_schedule = []
+        for p in results:
+            props = p['results']
+            page_weekday = int(props['День недели']['select']['name'])
 
+            pair_num = props['Пара']['number']
+            subject = props['Предмет']['title'][0]['plain_text']
+            lecturer = props['Преподаватель']['rich_text'][0]['plain_text']
 
-
+            if page_weekday-1 == weekday:
+                daily_schedule.append([pair_num, PAIR_SCHEDULE[pair_num],
+                                       subject, lecturer])
