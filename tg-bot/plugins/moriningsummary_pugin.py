@@ -1,7 +1,7 @@
 from random import choice, shuffle
 from datetime import datetime
 
-from .interface import ActionsCallback, MessageCallback, AbstractPlugin
+from .interface import ActionsCallbackTuple, MessageCallbackTuple, AbstractPlugin
 from notion import Notion
 from tools import protect_for_html
 
@@ -19,8 +19,8 @@ class GoodmorningPlugin(AbstractPlugin):
         super().__init__()
         self._name = "morningsummary"
         self._notion = Notion()
-        self._sending_time = datetime(year=0, month=0, day=0, 
-                                      hour=8, minute=30)
+        self._sending_time = datetime(year=1, month=1, day=1, 
+                                      hour=12, minute=12)
 
     @property
     def sending_time(self) -> datetime | tuple[datetime]:
@@ -87,13 +87,15 @@ class GoodmorningPlugin(AbstractPlugin):
         self._wish_goodday(message_data)
         return "\n".join(message_data)
 
-    def message_callabacks(self) -> tuple[MessageCallback, ...]:
+    @property
+    def message_callabacks(self) -> tuple[MessageCallbackTuple, ...]:
         if isinstance(self.sending_time, datetime):
             return ((self.sending_time, self.morning_message, 'daily'), )
         return tuple( (st, self.morning_message, 'daily') 
                      for st in self.sending_time)
     
-    def actions_callbacks(self) -> tuple[ActionsCallback, ...]:
+    @property
+    def actions_callbacks(self) -> tuple[ActionsCallbackTuple, ...]:
         return ()
 
 plg = GoodmorningPlugin

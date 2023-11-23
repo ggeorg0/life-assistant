@@ -2,8 +2,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import Sequence, Callable, Awaitable, Any 
 from datetime import datetime
 
-MessageCallback = tuple[datetime, Callable[..., Awaitable[str]], str]
-ActionsCallback = tuple[datetime, Callable[..., Awaitable[Any]], str]
+MessageCallbackTuple = tuple[datetime, Callable[..., Awaitable[str]], str]
+ActionsCallbackTuple = tuple[datetime, Callable[..., Awaitable[Any]], str]
 
 # depricated
 # TODO: delete this class later
@@ -45,11 +45,11 @@ class AbstractPlugin(metaclass=ABCMeta):
         self._name = name
 
     @abstractproperty
-    def message_callabacks(self) -> tuple[MessageCallback, ...]:
+    def message_callabacks(self) -> tuple[ActionsCallbackTuple, ...]:
         raise NotImplementedError
 
     @abstractproperty
-    def actions_callbacks(self) -> tuple[ActionsCallback, ...]:
+    def actions_callbacks(self) -> tuple[ActionsCallbackTuple, ...]:
         raise NotImplementedError
 
     @property
