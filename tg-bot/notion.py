@@ -55,7 +55,13 @@ class Notion():
                                                              "direction": "descending"}],
                                                      page_size=count)
         for p in results["results"]:
-            await self._client.pages.update(page_id=p['id'], archived=True)
+            await self.archive_page(id=p['id'])
+
+    async def archive_page(self, id: str):
+        await self._client.pages.update(page_id=id, archived=True)
+
+    async def unarchive_page(self, id: str):
+        await self._client.pages.update(page_id=id, archived=False)
     
     async def today_calendar_events(self):
         events = []
@@ -76,15 +82,17 @@ class Notion():
                         events.append(event)
         return events
     
-    async def current_tasks(self):
-        tasks = []
+    async def current_tasks(self) -> dict[str, str]:
+        tasks = {}
         async for block in async_iterate_paginated_api(
             self._client.databases.query, database_id=CURRENT_TASKS_ID
         ):
             for p in block:
                 props = p["properties"]
+                id = p['id']
                 if props["Name"]["title"]:
-                    tasks.append( props["Name"]["title"][0]['plain_text'])
+                    task_title = props["Name"]["title"][0]['plain_text']
+                    tasks[id] = task_title
         return tasks
     
 

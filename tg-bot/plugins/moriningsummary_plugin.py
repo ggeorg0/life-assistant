@@ -81,6 +81,7 @@ class MorningSummary(AbstractPlugin):
     async def morning_message(self, *args) -> str:
         calendar = await self._notion.today_calendar_events()
         tasks = await self._notion.current_tasks()
+        tasks = list(tasks.values())
         message_data = self._gather_base_summary(calendar, tasks)
         self._say_goodmorning(message_data)
         self._wish_goodday(message_data)
