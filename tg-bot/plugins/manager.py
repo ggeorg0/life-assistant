@@ -31,20 +31,14 @@ class PluginManager:
     def loaded_plugins(self) -> Generator[AbstractPlugin, None, None]:
         return (p for k, p in self._loaded_plugins.items() if p.enabled)
     
-    def get_plugin(self, plg_name):
-        return self._loaded_plugins[plg_name]
+    def get_enabled_plugin(self, plg_name: str) -> AbstractPlugin | None:
+        if (plg_name in self._loaded_plugins 
+                and self._loaded_plugins[plg_name].enabled):
+            return self._loaded_plugins[plg_name]
+        return None
     
     def _get_plugin(self, plg_name):
         return self._loaded_plugins[plg_name]
-
-    # def plugins_apply(self, data: list[str]):
-    #     # TODO
-    #     for plugin in self._loaded_plugins:
-    #         if plugin.enabled:
-    #             try:
-    #                 plugin.process_message(data)
-    #             except Exception as err:
-    #                 logging.error(err)
 
     def turn_off_plugin(self, name):
         self._get_plugin(name).enabled = False

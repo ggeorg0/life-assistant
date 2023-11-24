@@ -1,5 +1,5 @@
 from random import choice, shuffle
-from datetime import datetime
+from datetime import datetime, date
 
 from .interface import ActionsCallbackTuple, MessageCallbackTuple, AbstractPlugin
 from notion import Notion
@@ -13,14 +13,13 @@ WEEKENDS_WISHES = ["Выходные! Выходные! Я забыл прооо
 MONDAY_WISHES = ["С понедельничком!", "С началом рабочей недели!", "Это понедельник!", "Cнова понедельник!"]
 
 
-class GoodmorningPlugin(AbstractPlugin):
+class MorningSummary(AbstractPlugin):
     _sending_time: datetime | tuple[datetime]
     def __init__(self) -> None:
         super().__init__()
-        self._name = "morningsummary"
+        self._name = "MorningSummary"
         self._notion = Notion()
-        self._sending_time = datetime(year=1, month=1, day=1, 
-                                      hour=12, minute=12)
+        self._sending_time = datetime(1, 1, 1, 8, 30)
 
     @property
     def sending_time(self) -> datetime | tuple[datetime]:
@@ -79,14 +78,14 @@ class GoodmorningPlugin(AbstractPlugin):
             pool = pool + MONDAY_WISHES
         message.append(choice(pool))
 
-    async def morning_message(self) -> str:
+    async def morning_message(self, *args) -> str:
         calendar = await self._notion.today_calendar_events()
         tasks = await self._notion.current_tasks()
         message_data = self._gather_base_summary(calendar, tasks)
         self._say_goodmorning(message_data)
         self._wish_goodday(message_data)
         return "\n".join(message_data)
-
+    
     @property
     def message_callabacks(self) -> tuple[MessageCallbackTuple, ...]:
         if isinstance(self.sending_time, datetime):
@@ -98,4 +97,4 @@ class GoodmorningPlugin(AbstractPlugin):
     def actions_callbacks(self) -> tuple[ActionsCallbackTuple, ...]:
         return ()
 
-plg = GoodmorningPlugin
+plg = MorningSummary

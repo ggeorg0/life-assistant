@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, date
+from typing import Sequence, TypeVar
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
@@ -9,9 +10,12 @@ from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
 from config import PAIR_SCHEDULE, UNI_SCHEDULE
+from config import WEEKDAYS
 
 from tools import protect_for_html, singleton
 
+PairTime = tuple[int, tuple[int, int], tuple[int, int]]
+PairProperties = tuple[int, PairTime, str, str, str]
 
 @singleton
 class Notion():
@@ -83,18 +87,23 @@ class Notion():
                     tasks.append( props["Name"]["title"][0]['plain_text'])
         return tasks
     
-    async def uni_schedule(self): 
-        results = self._client.databases.query(database_id=UNI_SCHEDULE)
-        weekday = datetime.today().weekday()
-        daily_schedule = []
-        for p in results:
-            props = p['results']
-            page_weekday = int(props['День недели']['select']['name'])
 
-            pair_num = props['Пара']['number']
+    async def uni_daily_schedule(self, day: date) -> Sequence[PairProperties]:
+        results = await self._client.databases.query(database_id=UNI_SCHEDULE)
+        weekday = day.weekday()
+        daily_schedule = []
+        for p in results['results']:
+            props = p['properties']
+            page_weekday = props['День недели']['select']['name']
+            page_weekday = WEEKDAYS[page_weekday]
+
+            pair_num = int(props['Пара']['number'])
             subject = props['Предмет']['title'][0]['plain_text']
             lecturer = props['Преподаватель']['rich_text'][0]['plain_text']
+            auditory = props['Кабинет']['rich_text'][0]['plain_text']
 
             if page_weekday-1 == weekday:
-                daily_schedule.append([pair_num, PAIR_SCHEDULE[pair_num],
-                                       subject, lecturer])
+                daily_schedule.append( (pair_num, PAIR_SCHEDULE[pair_num],
+                                       subject, lecturer, auditory) )
+        return daily_schedule
+        

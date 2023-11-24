@@ -31,7 +31,7 @@ class UniSchedule(AbstractPlugin):
     async def form_schedule_message(self, day: date) -> str:
         daily_schedule = await self._notion.uni_daily_schedule(day)
         daily_schedule = sorted(daily_schedule)
-        message = ["Расписание на сегодня:",
+        message = ["Расписание:",
                    "<pre>%-2s %-5s %-7s %-20s" % ("#", "нач.", "каб.", "предмет"),
                    "-"*38]
         timeline_flag = True

@@ -108,13 +108,17 @@ async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE)
         
 @validate_user
 async def last_tasks(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
     try:
         titles = await nnotion.last_inbox_pages()
-        await context.bot.send_message(chat_id=update.effective_chat.id, 
+        await context.bot.send_message(chat_id, 
                                        text="\n".join(titles), 
                                        parse_mode='HTML')
     except APIResponseError as error:
-        context.bot.send_message(f"Error (code={error.code}). Try again later.")
+        await context.bot.send_message(
+            chat_id, 
+            f"Error (code={error.code}). Try again later."
+        )
 
 @validate_user
 async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -132,57 +136,6 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id, "Invalid number of pages"
                                                 "(Should be > 1 and <= 10)")
         
-def _fmt_event_time(event):
-    result = ''
-    if event['end']:
-        result = event['start'].strftime(" %d/%m")
-    if event['start'].hour or event['start'].minute:
-        result = result + event['start'].strftime(" %H:%M")
-    if event['end']:
-        result = result + event['end'].strftime(" — %d/%m")
-        if event['end'].hour or event['end'].minute:
-            result = result + event['end'].strftime(" %H:%M")
-    return result
-
-def gather_base_summary(calendar, current_tasks):
-    lines = []
-    events = [] 
-    now = datetime.now()
-    for event in calendar:
-        if now.date() == event['start'].date() or (now.date() >= event['start'].date()
-                                                   and event['end']
-                                                   and event['end'].date() >= now.date()):
-            line = ' > ' + event['title'] + _fmt_event_time(event)
-            events.append(protect_for_html(line))
-    if events:
-        lines.append("<b>События календаря:</b>")
-        events[-1] = events[-1] + '\n'
-        lines += events
-    lines.append('<b>5 случайных текущих задач:</b>')
-    shuffle(current_tasks)
-    for task in current_tasks[:5]:
-        lines.append(protect_for_html(' > ' + task))
-    lines[-1] = lines[-1] + '\n'
-    return lines
-
-async def gather_morning_message():
-    calendar = await nnotion.today_calendar_events()
-    tasks = await nnotion.current_tasks()
-    message_data = gather_base_summary(calendar, tasks)
-    plugin_manager.plugins_apply(message_data)
-    return "\n".join(message_data)
-
-async def send_morning_message(context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(TG_TARGET_ID, 
-                                   await gather_morning_message(),
-                                   parse_mode='HTML')
-
-@validate_user
-async def morning_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(update.effective_chat.id,
-                                   await gather_morning_message(),
-                                   parse_mode='HTML')
-
 @validate_user
 async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -326,7 +279,6 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).defaults(defaults).build()
     app.add_handler(CommandHandler("inbox", last_tasks))
     app.add_handler(CommandHandler("del", delete_last_n))
-    # app.add_handler(CommandHandler("morning", morning_message))
     app.add_handler(CommandHandler('rtask', random_current_task))
     app.add_handler(CommandHandler('help', help))
     app.add_handler(CommandHandler('reschedule_notifications', reschedule))
