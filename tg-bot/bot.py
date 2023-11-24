@@ -38,12 +38,16 @@ TZONE = timezone(timedelta(hours=3))
 HELP_MESSAGE = """Бот системы продуктивности.
 - /inbox - показать задачи в корзине
 - /del n - удалить последние n задач из корзины
-- /morning - показать утренее сообщение сейчас
-- /rtask - случайная задача из Current Tasks
+- /morning - показать утреннее сообщение сейчас
+- /rtask /task - случайная задача из Current Tasks
+- /done - отметить последнюю выбранную случайную задачу выполненой
+- /undone - отметить последнюю задачу как невыполненную (см. /done ) 
 - /help - показать это сообщение
 - /reschedule_notifications - удалить и создать заново отложенные уведомления расширений и плагинов
 - /schedule - расписание университета на сегодня 
 - /tschedule - расписание университета на завтра
+- /schedule_settime HH MM SS - установить время отправки расписания университета
+
 """
 
 # notion: AsyncClient
@@ -136,13 +140,6 @@ async def delete_last_n(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id, "Invalid number of pages"
                                                 "(Should be > 1 and <= 10)")
         
-@validate_user
-async def random_current_task(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    tasks = await nnotion.current_tasks()
-    shuffle(tasks)
-    await context.bot.send_message(chat_id, tasks[0])
-
 @validate_user
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -279,7 +276,6 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).defaults(defaults).build()
     app.add_handler(CommandHandler("inbox", last_tasks))
     app.add_handler(CommandHandler("del", delete_last_n))
-    app.add_handler(CommandHandler('rtask', random_current_task))
     app.add_handler(CommandHandler('help', help))
     app.add_handler(CommandHandler('reschedule_notifications', reschedule))
 
@@ -287,6 +283,10 @@ if __name__ == "__main__":
     bound_plg_method(app, 'schedule', "UniSchedule:today")
     bound_plg_method(app, 'tschedule', "UniSchedule:tomorrow")
     bound_plg_method(app, 'schedule_settime', "UniSchedule:set_sending_time")
+    bound_plg_method(app, 'rtask', "RandomCurrentTask:random_current_task")
+    bound_plg_method(app, 'task', "RandomCurrentTask:random_current_task")
+    bound_plg_method(app, 'done', "RandomCurrentTask:archive_last_task")
+    bound_plg_method(app, 'undone', "RandomCurrentTask:unarchive_last_task")
 
     reschedule_plugin_actions(app.job_queue)
 
