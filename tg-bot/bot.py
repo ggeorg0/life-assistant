@@ -91,11 +91,11 @@ async def insert_into_notion(update: Update, context: ContextTypes.DEFAULT_TYPE)
     except APIResponseError as error:
         if error.code == APIErrorCode.ServiceUnavailable:
             timing = 60
-            context.bot.send_message(chat_id, "Service Unavailable Err, "
+            await context.bot.send_message(chat_id, "Service Unavailable Err, "
                                      "Request will be sended again later")
         if error.code == APIErrorCode.RateLimited:
             timing = 3
-            context.bot.send_message(chat_id, "Rate Limited Err, "
+            await context.bot.send_message(chat_id, "Rate Limited Err, "
                                      "Request will be sended again later")
         else:
             raise APIResponseError
