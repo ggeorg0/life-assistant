@@ -2,10 +2,11 @@ import logging
 from datetime import datetime, time, timezone, timedelta
 import asyncio
 from random import shuffle
-from typing import Callable
+from typing import Callable, Awaitable, Literal
 
 from telegram import Update
-from telegram.ext import (ApplicationBuilder, 
+from telegram.ext import (ApplicationBuilder,
+                          Application,
                           CommandHandler, 
                           ContextTypes, 
                           MessageHandler,
@@ -41,6 +42,8 @@ HELP_MESSAGE = """Бот системы продуктивности.
 - /rtask - случайная задача из Current Tasks
 - /help - показать это сообщение
 - /reschedule_notifications - удалить и создать заново отложенные уведомления расширений и плагинов
+- /schedule - расписание университета на сегодня 
+- /tschedule - расписание университета на завтра
 """
 
 # notion: AsyncClient
@@ -215,7 +218,8 @@ async def send_custom_message(context: CallbackContext):
                       f"job.name=({context.job.name})")
         return
     if message:
-        await context.bot.send_message(TG_TARGET_ID, message)
+        await context.bot.send_message(TG_TARGET_ID, message,
+                                       parse_mode='HTML')
     else:
         logging.error("Trying to send empty message "
                       f"job.name=({context.job.name})")
@@ -249,24 +253,25 @@ def reschedule_plugin_actions(job_queue: JobQueue):
         for dt, m_callback, period in plg.message_callabacks:
             match period:
                 case "daily":
-                    job_queue.run_daily(send_custom_message, time=dt.time,
+                    job_queue.run_daily(send_custom_message, time=dt.time(),
                                         name=plg.name, data=m_callback)
                 case "once":
                     job_queue.run_once(send_custom_message, when=dt,
                                        name=plg.name, data=m_callback)
                 case "monthly":
-                    job_queue.run_monthly(send_custom_message, when=dt.time,
-                                          day=dt.day, data=m_callback)
+                    job_queue.run_monthly(send_custom_message, when=dt.time(),
+                                          name=plg.name, day=dt.day,
+                                          data=m_callback)
         for dt, act_callback, period in plg.actions_callbacks:
             match period:
                 case "daily":
-                    job_queue.run_daily(do_custom_action, time=dt.time,
+                    job_queue.run_daily(do_custom_action, time=dt.time(),
                                         name=plg.name, data=act_callback)
                 case "once":
                     job_queue.run_once(do_custom_action, when=dt,
                                        name=plg.name, data=act_callback)
                 case "monthly":
-                    job_queue.run_monthly(do_custom_action, when=dt.time,
+                    job_queue.run_monthly(do_custom_action, when=dt.time(),
                                           day=dt.day, name=plg.name,
                                           data=act_callback)
 
@@ -275,8 +280,41 @@ async def reschedule(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     try:
         reschedule_plugin_actions(context.job_queue)
+        await context.bot.send_message(chat_id, "Done!")
     except Exception as exc:
         await context.bot.send_message(chat_id, str(exc))
+
+def plg_method_callback_factory(plg_name, plg_method) -> Callable[..., Awaitable]:
+    @validate_user
+    async def bot_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        plg = plugin_manager.get_enabled_plugin(plg_name)
+        if plg:
+            method = getattr(plg, plg_method)
+            data = await method(*context.args)
+            if type(data) == str:
+                await context.bot.send_message(TG_TARGET_ID, text=data,
+                                               parse_mode='HTML')
+        else:
+            logging.warning(f"Plugin {plg_name} is not enabled. "
+                            "(unsuccessful try of execution)")
+    return bot_callback
+
+def bound_plg_method(app: Application,
+                     command: str,
+                     method_sorce: str):
+    """### Use this method to bound plugin method to the bot command.\n
+    For `method_sorce` argument you shoud separate plugin name 
+    (not name of plugin class) and method name with colon `:` 
+    (see expamle)
+    ### Example:
+    ```
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    bound_plg_method_to_cmd(app, 'weather', 'WeatherPlugin:get_weather')
+    """
+    plg_name, plg_method = method_sorce.split(':')
+    callback = plg_method_callback_factory(plg_name, plg_method)
+    app.add_handler(CommandHandler(command, callback))
 
 
 if __name__ == "__main__":
@@ -288,10 +326,15 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(BOT_TOKEN).defaults(defaults).build()
     app.add_handler(CommandHandler("inbox", last_tasks))
     app.add_handler(CommandHandler("del", delete_last_n))
-    app.add_handler(CommandHandler("morning", morning_message))
+    # app.add_handler(CommandHandler("morning", morning_message))
     app.add_handler(CommandHandler('rtask', random_current_task))
     app.add_handler(CommandHandler('help', help))
     app.add_handler(CommandHandler('reschedule_notifications', reschedule))
+
+    bound_plg_method(app, 'morning', "MorningSummary:morning_message")
+    bound_plg_method(app, 'schedule', "UniSchedule:today")
+    bound_plg_method(app, 'tschedule', "UniSchedule:tomorrow")
+    bound_plg_method(app, 'schedule_settime', "UniSchedule:set_sending_time")
 
     reschedule_plugin_actions(app.job_queue)
 
