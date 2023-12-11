@@ -6,6 +6,7 @@ from notion_client.helpers import async_iterate_paginated_api, is_full_page
 
 from config import BOT_TOKEN, INTEGRATION_TOKEN
 from config import TG_TARGET_ID, INBOX_DATABASE_ID
+from config import DONE_LIST_ID
 from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID
 from config import DEPTH_LIMIT, PAGE_SIZE
@@ -28,10 +29,8 @@ class Notion():
         return await self._client.pages.create(
             parent={'database_id': INBOX_DATABASE_ID},
             properties={
-                'Name': {
-                'title': [{'text': {'content': title}}]
-            }, 
-        })
+                'Name': {'title': [{'text': {'content': title}}]}
+            })
     
     async def last_inbox_pages(self) -> list[str]:
         results = await self._client.databases.query(database_id=INBOX_DATABASE_ID,
@@ -62,6 +61,16 @@ class Notion():
 
     async def unarchive_page(self, id: str):
         await self._client.pages.update(page_id=id, archived=False)
+
+    async def move_to_done(self, id: str):
+        """Actually, this method archives page 
+        and creates it's copy in Done list"""
+        done_props = await self._client.pages.retrieve(id)
+        new_page = await self._client.pages.create(
+            parent={'database_id': DONE_LIST_ID},
+            properties=done_props['properties'])
+        await self.archive_page(id)
+        return new_page['id']
     
     async def today_calendar_events(self):
         events = []
@@ -111,7 +120,7 @@ class Notion():
             auditory = props['Кабинет']['rich_text'][0]['plain_text']
 
             if page_weekday-1 == weekday:
-                daily_schedule.append( (pair_num, PAIR_SCHEDULE[pair_num],
+                daily_schedule.append( (pair_num, PAIR_SCHEDULE[pair_num - 1],
                                        subject, lecturer, auditory) )
         return daily_schedule
         

@@ -77,7 +77,7 @@ async def _call_api_when_available(notion_api_action: callable,
         if error.code == APIErrorCode.RateLimited:
             timing = 3 * depth * 2
         else:
-            raise APIResponseError
+            raise error
         context.job_queue.run_once(_call_api_when_available, 
                                    timing,
                                    name='pending_notion_api',
@@ -266,6 +266,41 @@ def bound_plg_method(app: Application,
     callback = plg_method_callback_factory(plg_name, plg_method)
     app.add_handler(CommandHandler(command, callback))
 
+def _number_from_args(cur: str, pos: int, args,
+                      search_seq: list[str]):
+    num = 0
+    if cur.lower() in search_seq:
+        try:
+            num = int(args[pos-1])
+        except Exception as e:
+            num = 1
+    return num
+
+async def reminder(context: CallbackContext):
+    await context.bot.send_message(TG_TARGET_ID, context.job.data,
+                                   parse_mode='HTML')
+            
+@validate_user
+async def remind(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    hours = 0
+    minutes = 0
+    seconds = 0
+    for i, a in enumerate(context.args):
+        hours = hours or _number_from_args(
+            a, i, context.args,
+            ["час", "ч", "h", "часа", "часов", "hour", "hours"])
+        minutes = minutes or _number_from_args(
+            a, i, context.args,
+            ["минут", "мин", "минуту", "минута", "минуты", "minutes", "min"])
+        seconds = seconds or _number_from_args(
+            a, i, context.args,
+            ["секунда", "секунд", "секунды", "сек", "sec", "s", "с"])
+    text = "Reminder: <b>" + protect_for_html(" ".join(context.args)) + "</b>"
+    td = timedelta(hours=hours, minutes=minutes, seconds=seconds)
+    context.job_queue.run_once(reminder, data=text, 
+                               when=datetime.today() + td,
+                               name='remind')
+    await context.bot.send_message(TG_TARGET_ID, "I'll remind you!")
 
 if __name__ == "__main__":
     nnotion = Notion()
@@ -278,6 +313,8 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("del", delete_last_n))
     app.add_handler(CommandHandler('help', help))
     app.add_handler(CommandHandler('reschedule_notifications', reschedule))
+    app.add_handler(CommandHandler('reschedule', reschedule))
+    app.add_handler(CommandHandler('remind', remind))
 
     bound_plg_method(app, 'morning', "MorningSummary:morning_message")
     bound_plg_method(app, 'schedule', "UniSchedule:today")
@@ -285,8 +322,8 @@ if __name__ == "__main__":
     bound_plg_method(app, 'schedule_settime', "UniSchedule:set_sending_time")
     bound_plg_method(app, 'rtask', "RandomCurrentTask:random_current_task")
     bound_plg_method(app, 'task', "RandomCurrentTask:random_current_task")
-    bound_plg_method(app, 'done', "RandomCurrentTask:archive_last_task")
-    bound_plg_method(app, 'undone', "RandomCurrentTask:unarchive_last_task")
+    bound_plg_method(app, 'done', "RandomCurrentTask:complete_last_task")
+    bound_plg_method(app, 'undone', "RandomCurrentTask:doagain_last_task")
 
     reschedule_plugin_actions(app.job_queue)
 

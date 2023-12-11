@@ -2,20 +2,27 @@ import os
 from datetime import time
 from dotenv import load_dotenv
 
+def load_env_var(var_name: str) -> str:
+    if value := os.environ.get(var_name):
+        return value
+    raise ValueError(f"{var_name} is not loaded properly")
+
 load_dotenv(override=True)
 
 # telegram token and target user id
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-TG_TARGET_ID = int(os.environ.get("TG_TARGET_ID"))
+BOT_TOKEN = load_env_var("BOT_TOKEN")
+TG_TARGET_ID = int(load_env_var("TG_TARGET_ID"))
 
 # notion token
-INTEGRATION_TOKEN = os.environ.get("INTEGRATION_TOKEN")
+INTEGRATION_TOKEN = load_env_var("INTEGRATION_TOKEN")
 
 # notion databases ids
-INBOX_DATABASE_ID = os.environ.get("INBOX_DATABASE_ID")
-CALENDAR_DATABASE_ID = os.environ.get("CALENDAR_DATABASE_ID")
-CURRENT_TASKS_ID = os.environ.get("CURRENT_TASKS_ID")
-UNI_SCHEDULE = os.environ.get("UNI_SCHEDULE")
+INBOX_DATABASE_ID = load_env_var("INBOX_DATABASE_ID")
+CALENDAR_DATABASE_ID = load_env_var("CALENDAR_DATABASE_ID")
+CURRENT_TASKS_ID = load_env_var("CURRENT_TASKS_ID")
+#TODO: rename UNI_SCHEDULE to UNI_SCHEDULE_ID
+UNI_SCHEDULE = load_env_var("UNI_SCHEDULE")
+DONE_LIST_ID = load_env_var("DONE_LIST_ID")
 
 # other hyperparameters
 DEPTH_LIMIT = 16
