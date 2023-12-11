@@ -31,6 +31,3 @@ def time_from_args(args: Sequence) -> time | str:
         if "invalid literal for int()" in ve.args[0]:
             return TIMESET_HELP_MSG
         return str(ve.args[0])
-    # except Exception as exc:
-        # return f"Some exception occured during time extraction: {exc}"
-
