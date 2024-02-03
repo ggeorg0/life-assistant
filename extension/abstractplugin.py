@@ -7,11 +7,13 @@ from config import TIMEZONE
 # TODO: make examples for docstrings
 
 class AbstractPlugin(metaclass=ABCMeta):
-    __slots__ = ("_enabled")
+    __slots__ = ("_enabled", "_name")
     _enabled: bool
+    _name: str
 
-    def __init__(self):
-        _enabled = True
+    def __init__(self, name):
+        self._enabled = True
+        self._name = name
 
     @abstractmethod
     def user_commands(self) -> tuple[tuple[str, Callable], ...]:
@@ -49,6 +51,10 @@ class AbstractPlugin(metaclass=ABCMeta):
         depending on this property should be handled in other classes.
         """
         return self._enabled
+
+    @property
+    def name(self):
+        return self._name
 
     def _get_datetime_now(self) -> datetime:
         """Return current time"""
