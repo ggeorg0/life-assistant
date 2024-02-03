@@ -1,13 +1,18 @@
-import os 
+import os
 from datetime import time
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
+# load environmental variables
 def load_env_var(var_name: str) -> str:
     if value := os.environ.get(var_name):
         return value
     raise ValueError(f"{var_name} is not loaded properly")
 
 load_dotenv(override=True)
+
+# set applicatoin timezone
+TIMEZONE = ZoneInfo("Europe/Moscow")
 
 # telegram token and target user id
 BOT_TOKEN = load_env_var("BOT_TOKEN")
