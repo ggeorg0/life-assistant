@@ -1,6 +1,9 @@
-from collections.abc import Iterable
+from typing import TYPE_CHECKING
 from itertools import count
 import logging
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+    from datetime import datetime
 
 from extension.abstractplugin import AbstractPlugin
 
@@ -15,15 +18,21 @@ class PluginManager:
             raise RuntimeError("There are additional PluginManager instance")
         self.set_plugins(plugins)
 
-    def user_commands(self):
-        # return ("commandname", action), ...
-        # TODO
-        pass
+    def user_commands(self) -> Iterable[tuple[str, str, Callable]]:
+        # return ("plg_name", "commandname", action), ...
+        # TODO join subtuples into one tuple
+        ...
 
-    def scheduled_events(self):
-        # return (datetime, action), ...
+    def daily_events(self) -> Iterable[tuple[str, datetime, Callable]]:
+        # return ("plg_name", datetime, action), ...
         # TODO
-        pass
+        ...
+
+    def monthly_events(self) -> Iterable[tuple[str, datetime, Callable]]:
+        ...
+
+    def disorder_events(self) -> Iterable[tuple[str, datetime, Callable]]:
+        ...
 
     def set_plugins(self, plugins: Iterable[AbstractPlugin]):
         self._loaded_plugins = {p.name: p for p in plugins}

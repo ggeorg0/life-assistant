@@ -5,7 +5,7 @@ from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
 
 from config import BOT_TOKEN, INTEGRATION_TOKEN
-from config import TG_TARGET_ID, INBOX_DATABASE_ID
+from config import TG_USER_ID, INBOX_DATABASE_ID
 from config import DONE_LIST_ID
 from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID
@@ -31,7 +31,7 @@ class Notion():
             properties={
                 'Name': {'title': [{'text': {'content': title}}]}
             })
-    
+
     async def last_inbox_pages(self) -> list[str]:
         results = await self._client.databases.query(database_id=INBOX_DATABASE_ID,
                                                      sorts=[{"property": "Created",
@@ -49,7 +49,7 @@ class Notion():
         return titles
 
     async def archive_n_pages(self, count=1):
-        results = await self._client.databases.query(database_id=INBOX_DATABASE_ID, 
+        results = await self._client.databases.query(database_id=INBOX_DATABASE_ID,
                                                      sorts=[{"property": "Created",
                                                              "direction": "descending"}],
                                                      page_size=count)
@@ -63,7 +63,7 @@ class Notion():
         await self._client.pages.update(page_id=id, archived=False)
 
     async def move_to_done(self, id: str):
-        """Actually, this method archives page 
+        """Actually, this method archives page
         and creates it's copy in Done list"""
         done_props = await self._client.pages.retrieve(id)
         new_page = await self._client.pages.create(
@@ -71,7 +71,7 @@ class Notion():
             properties=done_props['properties'])
         await self.archive_page(id)
         return new_page['id']
-    
+
     async def today_calendar_events(self):
         events = []
         async for block in async_iterate_paginated_api(
@@ -90,7 +90,7 @@ class Notion():
                             event['end'] = datetime.fromisoformat(event['end'])
                         events.append(event)
         return events
-    
+
     async def current_tasks(self) -> dict[str, str]:
         tasks = {}
         async for block in async_iterate_paginated_api(
@@ -103,7 +103,7 @@ class Notion():
                     task_title = props["Name"]["title"][0]['plain_text']
                     tasks[id] = task_title
         return tasks
-    
+
 
     async def uni_daily_schedule(self, day: date) -> Sequence[PairProperties]:
         results = await self._client.databases.query(database_id=UNI_SCHEDULE)
@@ -123,4 +123,3 @@ class Notion():
                 daily_schedule.append( (pair_num, PAIR_SCHEDULE[pair_num - 1],
                                        subject, lecturer, auditory) )
         return daily_schedule
-        

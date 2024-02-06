@@ -23,11 +23,36 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def plg_events(self) -> tuple[tuple[datetime, Callable]]:
-        """Return sequence of time and action pairs.
-        Action is usualy a plugin method.
+    def plg_daily_events(self) -> tuple[tuple[datetime, Callable]]:
+        """Daily scheduled plugin events.
+
+        Return sequence of time and action pairs
+        (action is usualy a plugin method)
         """
         ...
+
+    @abstractmethod
+    def plg_monthly_events(self) -> tuple[tuple[datetime, Callable]]:
+        """Monthly scheduled plugin events.
+
+        Return sequence of datetime and action pairs
+        (action is usualy a plugin method).
+        Note: `year` and `month` parts of the
+        `datetime` will be ignored.
+        """
+        ...
+
+    @abstractmethod
+    def plg_disordered_events(self) -> tuple[tuple[datetime, Callable]]:
+        """Single plugin events, that can spawn other single events.
+        Scheduled time of execution can be pretty chaotic,
+        because it depends on the specific plugin.
+
+        Return sequence of datetime and action pairs
+        (action is usualy a plugin method).
+        """
+        ...
+
 
     def enable(self):
         """Enable plugin.
@@ -45,7 +70,7 @@ class AbstractPlugin(metaclass=ABCMeta):
 
     @property
     def isenabled(self):
-        """Shows is plugin enabled or not.
+        """Show is the plugin enabled or not.
         Important note: by default, this does not affect the behavior
         of the plugin itself. The presence or absence of any actions
         depending on this property should be handled in other classes.

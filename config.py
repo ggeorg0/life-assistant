@@ -14,9 +14,12 @@ load_dotenv(override=True)
 # set applicatoin timezone
 TIMEZONE = ZoneInfo("Europe/Moscow")
 
+# plugins directory
+PLUGINS_DIR = "./extension/plugins"
+
 # telegram token and target user id
 BOT_TOKEN = load_env_var("BOT_TOKEN")
-TG_TARGET_ID = int(load_env_var("TG_TARGET_ID"))
+TG_CHAT_ID = int(load_env_var("TG_TARGET_ID"))
 
 # notion token
 INTEGRATION_TOKEN = load_env_var("INTEGRATION_TOKEN")

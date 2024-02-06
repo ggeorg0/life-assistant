@@ -1,10 +1,24 @@
+from __future__ import annotations
 from datetime import time
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
+
+if TYPE_CHECKING:
+    from telegram import Update
+
+from config import TG_USER_ID
 
 TIMESET_HELP_MSG = "You should provide your command \
 with hours minutes ands seconds in this fashon:\n \
 /your_command HH MM SS \
 "
+
+def validate_user(func):
+    async def wrapper(update: Update, *args, **kwargs):
+        if update.effective_chat.id == TG_USER_ID:
+            return await func(update, *args, **kwargs)
+
+    return wrapper
+
 
 def protect_for_html(text_data):
     return text_data.replace('&', '&amp;')\
