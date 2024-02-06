@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 from collections.abc import Awaitable, Callable, Coroutine
 from typing import Any
+
 from telegram import Update
 from telegram.ext import (Application,
                           CommandHandler,
@@ -19,7 +20,7 @@ from extension.plugins import (
     AddTask,
     )
 from tools import validate_user, protect_for_html
-from config import TG_USER_ID
+from config import TG_CHAT_ID
 
 DateAndActionT = tuple[datetime, Callable]
 ActionT = Callable[..., Coroutine[Any, Any, ActionResult]]
@@ -43,6 +44,7 @@ class ExtensionLoader:
         self._plg_manager = PluginManager()
 
     def load_plugins(self):
+        # TODO: add dynamic loading from `self._plugins_dir`
         plugins = (UniSchedule, MorningSummary, AddTask, RandomCurrentTask)
         self._plg_manager.set_plugins(plugins)
 
@@ -56,8 +58,9 @@ class ExtensionLoader:
         @validate_user
         async def callback(update: Update,
                            context: ContextTypes.DEFAULT_TYPE):
+            command_args = context.args or ()
             try:
-                act_result = await action()
+                act_result = await action(*command_args)
             except Exception as e:
                 logging.error(f"[{plg_name}] user triggered action "
                               f"'{action.__name__}' FAILED \n{e}")
@@ -91,7 +94,7 @@ class ExtensionLoader:
                 callback,
                 time=dt.time(),
                 name=plg_name,
-                chat_id=TG_USER_ID
+                chat_id=TG_CHAT_ID
             )
 
     def load_disordered_events(self, app: Application):
@@ -101,7 +104,7 @@ class ExtensionLoader:
                 callback,
                 when=dt,
                 name=plg_name,
-                chat_id=TG_USER_ID)
+                chat_id=TG_CHAT_ID)
 
     def load_monthly_events(self, app: Application):
         for plg_name, dt, action in self._plg_manager.monthly_events():
@@ -111,7 +114,7 @@ class ExtensionLoader:
                 when=dt.time(),
                 day=dt.day,
                 name=plg_name,
-                chat_id=TG_USER_ID)
+                chat_id=TG_CHAT_ID)
 
     def create_event_callback(self, action: ActionT, plg_name: str):
         async def callback(context: CallbackContext):
