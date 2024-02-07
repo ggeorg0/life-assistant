@@ -1,9 +1,7 @@
-from typing import TYPE_CHECKING
 from itertools import count
 import logging
-if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-    from datetime import datetime
+from collections.abc import Callable, Iterable
+from datetime import datetime
 
 from extension.abstractplugin import AbstractPlugin
 

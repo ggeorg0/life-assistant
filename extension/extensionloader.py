@@ -12,18 +12,15 @@ from telegram.ext import (Application,
                           CallbackContext,
                           JobQueue)
 
-from extension import PluginManager, ActionResult
+from extension import PluginManager
 from extension.plugins import (
-    UniSchedule,
-    MorningSummary,
+    # UniSchedule,
+    # MorningSummary,
     RandomCurrentTask,
-    AddTask,
     )
 from tools import validate_user, protect_for_html
 from config import TG_CHAT_ID
-
-DateAndActionT = tuple[datetime, Callable]
-ActionT = Callable[..., Coroutine[Any, Any, ActionResult]]
+from extension.plgtyples import ActionT
 
 # TODO: automatic help command by all plugins
 # TODO: rename callbackreturn
@@ -48,13 +45,15 @@ class ExtensionLoader:
 
     def load_plugins(self):
         # TODO: add dynamic loading from `self._plugins_dir`
-        plugins = (UniSchedule, MorningSummary, AddTask, RandomCurrentTask)
+        # plugins = (UniSchedule(), MorningSummary(), RandomCurrentTask())
+        plugins = (RandomCurrentTask(), )
         self._plg_manager.set_plugins(plugins)
 
     def load_commands(self, app: Application):
         for plg_name, cmd, action in self._plg_manager.user_commands():
             callback = self.make_command_callback(action, plg_name)
             app.add_handler(CommandHandler(cmd, callback))
+            logging.info(f"[{plg_name}]: adding command /{cmd}")
 
     def make_command_callback(self, action: ActionT, plg_name: str) \
             -> Callable[..., Coroutine[Any, Any, None]]:
@@ -71,7 +70,7 @@ class ExtensionLoader:
             if act_result.message:
                 await context.bot.send_message(
                     update.effective_chat.id,
-                    protect_for_html(act_result)
+                    protect_for_html(act_result.message)
                 )
             elif not (act_result.next_action is None
                       or act_result.next_datetime is None):
@@ -130,7 +129,7 @@ class ExtensionLoader:
             if act_result.message:
                 context.bot.send_message(
                     context.job.chat_id,
-                    act_result.message
+                    protect_for_html(act_result.message)
                 )
             elif not (act_result.next_action is None
                       or act_result.next_datetime is None):

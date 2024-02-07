@@ -1,8 +1,9 @@
 from abc import ABCMeta, abstractmethod
-from collections.abc import Callable
 from datetime import datetime
-from config import TIMEZONE
 
+from config import TIMEZONE
+from extension import ActionResult
+from extension.typing import EventsScheduleT, CommandBindingsT
 
 # TODO: make examples for docstrings
 
@@ -16,14 +17,14 @@ class AbstractPlugin(metaclass=ABCMeta):
         self._name = name
 
     @abstractmethod
-    def user_commands(self) -> tuple[tuple[str, Callable], ...]:
+    def user_commands(self) -> CommandBindingsT:
         """Return sequence of user's command name and actions pairs.
         Action is usualy a plugin method.
         """
         ...
 
     @abstractmethod
-    def daily_events(self) -> tuple[tuple[datetime, Callable]]:
+    def daily_events(self) -> EventsScheduleT:
         """Daily scheduled plugin events.
 
         Return sequence of time and action pairs
@@ -32,7 +33,7 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def monthly_events(self) -> tuple[tuple[datetime, Callable]]:
+    def monthly_events(self) -> EventsScheduleT:
         """Monthly scheduled plugin events.
 
         Return sequence of datetime and action pairs
@@ -43,7 +44,7 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def disordered_events(self) -> tuple[tuple[datetime, Callable]]:
+    def disordered_events(self) -> EventsScheduleT:
         """Single plugin events, that can spawn other single events.
         Scheduled time of execution can be pretty chaotic,
         because it depends on the specific plugin.
@@ -84,3 +85,16 @@ class AbstractPlugin(metaclass=ABCMeta):
     def _get_datetime_now(self) -> datetime:
         """Return current time"""
         return datetime.now(tz=TIMEZONE)
+
+
+    ### plugin actions ###
+
+    async def help(self, *args) -> ActionResult:
+        """
+        Send help message to the user.
+        To make this actually work,
+        this method must be returned by `self.user_commands`.
+
+        This is also simple example of plugin action
+        """
+        return ActionResult(message="default help message")
