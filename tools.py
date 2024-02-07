@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
     from telegram import Update
 
-from config import TG_USER_ID
+from config import TG_CHAT_ID
 
 TIMESET_HELP_MSG = "You should provide your command \
 with hours minutes ands seconds in this fashon:\n \
@@ -14,7 +14,7 @@ with hours minutes ands seconds in this fashon:\n \
 
 def validate_user(func):
     async def wrapper(update: Update, *args, **kwargs):
-        if update.effective_chat.id == TG_USER_ID:
+        if update.effective_chat.id == TG_CHAT_ID:
             return await func(update, *args, **kwargs)
 
     return wrapper

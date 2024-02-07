@@ -35,7 +35,10 @@ ActionT = Callable[..., Coroutine[Any, Any, ActionResult]]
 
 
 class ExtensionLoader:
-    __slots__ = ()
+    __slots__ = (
+        "_plugins_dir",
+        "_plg_manager"
+    )
     _plugins_dir: str
     _plg_manager: PluginManager
 
@@ -64,7 +67,7 @@ class ExtensionLoader:
             except Exception as e:
                 logging.error(f"[{plg_name}] user triggered action "
                               f"'{action.__name__}' FAILED \n{e}")
-                return
+                return None
             if act_result.message:
                 await context.bot.send_message(
                     update.effective_chat.id,
@@ -123,7 +126,7 @@ class ExtensionLoader:
             except Exception as e:
                 logging.error(f"[{plg_name}] user triggered action "
                               f"'{action.__name__}' FAILED \n{e}")
-                return
+                return None
             if act_result.message:
                 context.bot.send_message(
                     context.job.chat_id,

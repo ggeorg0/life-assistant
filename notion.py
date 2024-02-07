@@ -5,7 +5,7 @@ from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
 
 from config import BOT_TOKEN, INTEGRATION_TOKEN
-from config import TG_USER_ID, INBOX_DATABASE_ID
+from config import TG_CHAT_ID, INBOX_DATABASE_ID
 from config import DONE_LIST_ID
 from config import CALENDAR_DATABASE_ID
 from config import CURRENT_TASKS_ID

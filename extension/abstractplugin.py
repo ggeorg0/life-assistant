@@ -23,7 +23,7 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def plg_daily_events(self) -> tuple[tuple[datetime, Callable]]:
+    def daily_events(self) -> tuple[tuple[datetime, Callable]]:
         """Daily scheduled plugin events.
 
         Return sequence of time and action pairs
@@ -32,7 +32,7 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def plg_monthly_events(self) -> tuple[tuple[datetime, Callable]]:
+    def monthly_events(self) -> tuple[tuple[datetime, Callable]]:
         """Monthly scheduled plugin events.
 
         Return sequence of datetime and action pairs
@@ -43,7 +43,7 @@ class AbstractPlugin(metaclass=ABCMeta):
         ...
 
     @abstractmethod
-    def plg_disordered_events(self) -> tuple[tuple[datetime, Callable]]:
+    def disordered_events(self) -> tuple[tuple[datetime, Callable]]:
         """Single plugin events, that can spawn other single events.
         Scheduled time of execution can be pretty chaotic,
         because it depends on the specific plugin.

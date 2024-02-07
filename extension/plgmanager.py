@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 from extension.abstractplugin import AbstractPlugin
 
+
 class PluginManager:
     # Singletone class
     _ids = count(0)
@@ -19,20 +20,46 @@ class PluginManager:
         self.set_plugins(plugins)
 
     def user_commands(self) -> Iterable[tuple[str, str, Callable]]:
-        # return ("plg_name", "commandname", action), ...
-        # TODO join subtuples into one tuple
-        ...
+        logging.info("Plugin Manager: loading user commands")
+        for plg_name, p in self._loaded_plugins.items():
+            if p.isenabled:
+                for command, action in p.user_commands():
+                    yield (plg_name, command, action)
+            else:
+                logging.info(f"Plugin Manager: skipping [{plg_name}]"
+                             " (not enabled)")
 
     def daily_events(self) -> Iterable[tuple[str, datetime, Callable]]:
-        # return ("plg_name", datetime, action), ...
-        # TODO
-        ...
+        logging.info("Plugin Manager: loading daily events")
+        for plg_name, p in self._loaded_plugins.items():
+            if p.isenabled:
+                for dt, action in p.daily_events():
+                    yield (plg_name, dt, action)
+            else:
+                logging.info(f"Plugin Manager: skipping [{plg_name}]"
+                             " (not enabled)")
 
     def monthly_events(self) -> Iterable[tuple[str, datetime, Callable]]:
-        ...
+        logging.info("Plugin Manager: loading monthly events")
+        for plg_name, p in self._loaded_plugins.items():
+            if p.isenabled:
+                for dt, action in p.monthly_events():
+                    yield (plg_name, dt, action)
+            else:
+                logging.info(f"Plugin Manager: skipping [{plg_name}]"
+                             " (not enabled)")
+
 
     def disorder_events(self) -> Iterable[tuple[str, datetime, Callable]]:
-        ...
+        logging.info("Plugin Manager: loading disordered events")
+        for plg_name, p in self._loaded_plugins.items():
+            if p.isenabled:
+                for dt, action in p.disordered_events():
+                    yield (plg_name, dt, action)
+            else:
+                logging.info(f"Plugin Manager: skipping [{plg_name}]"
+                             " (not enabled)")
+
 
     def set_plugins(self, plugins: Iterable[AbstractPlugin]):
         self._loaded_plugins = {p.name: p for p in plugins}
