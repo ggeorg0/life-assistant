@@ -10,7 +10,7 @@ from telegram.ext import (
 )
 
 from extension import PluginManager, PluginLoader
-from extension.plgtyples import ActionT
+from extension.exttypes import ActionT
 from config import TG_CHAT_ID, PLUGINS_DIR
 from tools import validate_user
 
@@ -110,7 +110,7 @@ class ExtensionLoader:
                               f"'{action.__name__}' FAILED \n{e}")
                 return None
             if act_result.message:
-                context.bot.send_message(
+                await context.bot.send_message(
                     context.job.chat_id,
                     act_result.message
                 )
