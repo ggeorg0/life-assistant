@@ -5,6 +5,6 @@ from extension import ActionResult
 
 
 ActionT = Callable[..., Coroutine[Any, Any, ActionResult]]
-EventsScheduleT = tuple[()] | tuple[tuple[datetime, ActionT], ...]
-CommandBindingsT = tuple[()] | tuple[tuple[str, ActionT], ...]
+EventsScheduleT = tuple[tuple[datetime, ActionT], ...]  | tuple[()]
+CommandBindingsT = tuple[tuple[str, ActionT], ...] | tuple[()]
 

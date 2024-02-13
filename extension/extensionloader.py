@@ -1,34 +1,25 @@
-from datetime import datetime
 import logging
-from collections.abc import Awaitable, Callable, Coroutine
+import importlib.util
+from inspect import isclass
+import traceback
+import os
+from collections.abc import Callable, Coroutine
 from typing import Any
 
 from telegram import Update
-from telegram.ext import (Application,
-                          CommandHandler,
-                          ContextTypes,
-                          MessageHandler,
-                          filters,
-                          CallbackContext,
-                          JobQueue)
-
-from extension import PluginManager
-from extension.plugins import (
-    # UniSchedule,
-    # MorningSummary,
-    RandomCurrentTask,
-    )
-from tools import validate_user, protect_for_html
-from config import TG_CHAT_ID
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    CallbackContext
+)
+from extension import PluginManager, AbstractPlugin
+from tools import validate_user
+from config import TG_CHAT_ID, PLUGINS_DIR
 from extension.plgtyples import ActionT
+from pathlib import Path
 
 # TODO: automatic help command by all plugins
-# TODO: rename callbackreturn
-# TODO: reorder imports
-
-
-# command --> str , str | event, event
-#       where `event` --> (datetime and plugin.action)
 
 
 class ExtensionLoader:
@@ -44,10 +35,39 @@ class ExtensionLoader:
         self._plg_manager = PluginManager()
 
     def load_plugins(self):
-        # TODO: add dynamic loading from `self._plugins_dir`
-        # plugins = (UniSchedule(), MorningSummary(), RandomCurrentTask())
-        plugins = (RandomCurrentTask(), )
+        plugin_files = [file for file in os.listdir(PLUGINS_DIR)
+                        if file.endswith('plugin.py')]
+        plugins = []
+        for pf in plugin_files:
+            try:
+                plugins += self._load_plugin_file(pf)
+            except Exception as e:
+                logging.error(f"cannot load file `{pf}`, reason:\n"
+                              f"{''.join(traceback.format_exception(e))}")
         self._plg_manager.set_plugins(plugins)
+
+    def _load_plugin_file(self, filename) -> list[AbstractPlugin]:
+            path, name = self._module_path_name(PLUGINS_DIR, filename)
+            spec = importlib.util.spec_from_file_location(name, path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            return self._fetch_plugins_from_module(module)
+
+    def _module_path_name(self, path: str, filename: str) -> tuple[Path, str]:
+        filepath = Path(path, filename)
+        module_name = filename[:-3] # remove '.py'
+        return filepath, module_name
+
+    def _fetch_plugins_from_module(self, module):
+        module_dir = [v for v in dir(module) if not v.startswith('__')]
+        instances = []
+        for obj in module_dir:
+            module_attr = getattr(module, obj)
+            if (isclass(module_attr)
+                    and issubclass(module_attr, AbstractPlugin)
+                    and module_attr is not AbstractPlugin):
+                instances.append(module_attr())
+        return instances
 
     def load_commands(self, app: Application):
         for plg_name, cmd, action in self._plg_manager.user_commands():
@@ -55,8 +75,7 @@ class ExtensionLoader:
             app.add_handler(CommandHandler(cmd, callback))
             logging.info(f"[{plg_name}]: adding command /{cmd}")
 
-    def make_command_callback(self, action: ActionT, plg_name: str) \
-            -> Callable[..., Coroutine[Any, Any, None]]:
+    def make_command_callback(self, action: ActionT, plg_name: str):
         @validate_user
         async def callback(update: Update,
                            context: ContextTypes.DEFAULT_TYPE):
@@ -70,7 +89,7 @@ class ExtensionLoader:
             if act_result.message:
                 await context.bot.send_message(
                     update.effective_chat.id,
-                    protect_for_html(act_result.message)
+                    act_result.message
                 )
             elif not (act_result.next_action is None
                       or act_result.next_datetime is None):
@@ -123,13 +142,13 @@ class ExtensionLoader:
             try:
                 act_result = await action()
             except Exception as e:
-                logging.error(f"[{plg_name}] user triggered action "
+                logging.error(f"[{plg_name}] triggered action "
                               f"'{action.__name__}' FAILED \n{e}")
                 return None
             if act_result.message:
                 context.bot.send_message(
                     context.job.chat_id,
-                    protect_for_html(act_result.message)
+                    act_result.message
                 )
             elif not (act_result.next_action is None
                       or act_result.next_datetime is None):
