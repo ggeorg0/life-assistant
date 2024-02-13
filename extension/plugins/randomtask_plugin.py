@@ -4,7 +4,7 @@ from random import choice
 from typing import Any
 
 from extension import AbstractPlugin, ActionResult
-from extension.plgtyples import ActionT, CommandBindingsT, EventsScheduleT
+from extension.exttypes import ActionT, CommandBindingsT, EventsScheduleT
 from tools import protect_for_html
 from notion import Notion
 

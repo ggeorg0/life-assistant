@@ -3,7 +3,7 @@ from datetime import datetime
 
 from config import TIMEZONE
 from extension import ActionResult
-from extension.plgtyples import EventsScheduleT, CommandBindingsT
+from extension.exttypes import EventsScheduleT, CommandBindingsT
 
 # TODO: make examples for docstrings
 
