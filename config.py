@@ -19,7 +19,7 @@ PLUGINS_DIR = "./extension/plugins"
 
 # telegram token and target user id
 BOT_TOKEN = load_env_var("BOT_TOKEN")
-TG_CHAT_ID = int(load_env_var("TG_TARGET_ID"))
+TG_CHAT_ID = int(load_env_var("TG_CHAT_ID"))
 
 # notion token
 INTEGRATION_TOKEN = load_env_var("INTEGRATION_TOKEN")
@@ -45,4 +45,12 @@ PAIR_SCHEDULE = [[1, (9, 00), (10, 30)],
 
 WEEKDAYS = {"Пн": 1, "Вт": 2, "Ср": 3, "Чт": 4, "Пт": 5, "Сб": 6, "Вс": 7}
 
-DEFAULT_SCHEDULE_TIME = time(hour=8, minute=30, second=15)
+## UniSchedule plugin
+# send time of today university schedule
+TODAY_SCHED_TIME = time(hour=8, minute=10, second=0)
+# send time of tomorrow university schedule
+TOMMOROW_SCHED_TIME = time(hour=22, minute=30, second=10)
+
+## Inbox Manager Plugin
+# default number of resent tasks obtained from inbox
+INBOX_LAST_N = 10
