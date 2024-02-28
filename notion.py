@@ -4,14 +4,16 @@ from typing import Sequence, TypeVar
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
 
-from config import BOT_TOKEN, INTEGRATION_TOKEN
-from config import TG_CHAT_ID, INBOX_DATABASE_ID
-from config import DONE_LIST_ID
-from config import CALENDAR_DATABASE_ID
-from config import CURRENT_TASKS_ID
-from config import DEPTH_LIMIT, PAGE_SIZE
-from config import PAIR_SCHEDULE, UNI_SCHEDULE
-from config import WEEKDAYS
+from config import (
+    INTEGRATION_TOKEN,
+    INBOX_DATABASE_ID,
+    DONE_LIST_ID,
+    CALENDAR_DATABASE_ID,
+    CURRENT_TASKS_ID,
+    PAIR_SCHEDULE,
+    UNI_SCHEDULE,
+    WEEKDAYS
+)
 
 from tools import protect_for_html, singleton
 
@@ -32,11 +34,13 @@ class Notion():
                 'Name': {'title': [{'text': {'content': title}}]}
             })
 
-    async def last_inbox_pages(self) -> list[str]:
-        results = await self._client.databases.query(database_id=INBOX_DATABASE_ID,
-                                                     sorts=[{"property": "Created",
-                                                             "direction": "descending"}],
-                                                     page_size=PAGE_SIZE)
+    async def last_inbox_pages(self, n_pages: int) -> list[str]:
+        results = await self._client.databases.query(
+            database_id=INBOX_DATABASE_ID,
+            sorts=[{"property": "Created",
+                    "direction": "descending"}],
+            page_size=n_pages
+        )
         titles = ["<b>List of tasks</b>"]
         for i, task in enumerate(results["results"]):
             if is_full_page(task):
