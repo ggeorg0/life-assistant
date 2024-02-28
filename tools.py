@@ -1,11 +1,11 @@
 from __future__ import annotations
-from datetime import time
+from datetime import time, datetime
 from typing import TYPE_CHECKING, Sequence
 
 if TYPE_CHECKING:
     from telegram import Update
 
-from config import TG_CHAT_ID
+from config import TG_CHAT_ID, TIMEZONE
 
 TIMESET_HELP_MSG = "You should provide your command \
 with hours minutes ands seconds in this fashon:\n \
@@ -45,3 +45,9 @@ def time_from_args(args: Sequence) -> time | str:
         if "invalid literal for int()" in ve.args[0]:
             return TIMESET_HELP_MSG
         return str(ve.args[0])
+
+def dt_from_time(time: time):
+    return datetime.combine(
+        date=datetime.now(),
+        time=time,
+        tzinfo=TIMEZONE)
