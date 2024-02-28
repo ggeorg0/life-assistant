@@ -92,18 +92,15 @@ class PluginManager:
                 )
 
     async def list_plugins(self) -> ActionResult:
-        """User command for lising loaded plugins"""
+        """User command for listing loaded plugins"""
         message = ['<pre>']     # <pre> - HTML formatting of code
         message.append(f"{'Plugin Name':20} {'Enabled':7}")
         message.append('-' * 29)
         for name, plg in self._loaded_plugins.items():
-            enabled = self.to_YesNo(plg.isenabled)
+            enabled = 'YES' if plg.isenabled else 'NO'
             message.append(f"{name:20} {enabled:>7}")
         message.append('</pre>')
         return ActionResult('\n'.join(message))
-
-    def to_YesNo(self, value: bool):
-        return "YES" if value else "NO"
 
     def _enable_plugin(self, name):
         self._get_plugin(name).enable()
