@@ -28,8 +28,7 @@ INTEGRATION_TOKEN = load_env_var("INTEGRATION_TOKEN")
 INBOX_DATABASE_ID = load_env_var("INBOX_DATABASE_ID")
 CALENDAR_DATABASE_ID = load_env_var("CALENDAR_DATABASE_ID")
 CURRENT_TASKS_ID = load_env_var("CURRENT_TASKS_ID")
-#TODO: rename UNI_SCHEDULE to UNI_SCHEDULE_ID
-UNI_SCHEDULE = load_env_var("UNI_SCHEDULE")
+UNI_SCHEDULE = load_env_var("UNI_SCHEDULE_ID")
 DONE_LIST_ID = load_env_var("DONE_LIST_ID")
 
 # other hyperparameters

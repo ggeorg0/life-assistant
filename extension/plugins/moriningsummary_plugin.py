@@ -1,33 +1,64 @@
 from random import choice, shuffle
-from datetime import datetime, date
+from datetime import datetime
 
-from .interface import ActionsCallbackTuple, MessageCallbackTuple, AbstractPlugin
+from extension import AbstractPlugin, ActionResult
+from extension.exttypes import CommandBindingsT, EventsScheduleT
 from notion import Notion
-from tools import protect_for_html
+from tools import protect_for_html, dt_from_time, time_from_args
+from config import MORNING_MESSAGE_TIME
 
-GOOD_MORNING_PHRASES = ['Доброе утро!', 'С добрым утром!', 'Подъем!', 'Guten morgen!']
-
-DEFAULT_WISHES = ["Хорошего дня!", "Отличной работы", "Have a nice day!"]
-HARDWORK_WISHES = ["За работу блин!", "Вперед на завод!!!", "Работаем + жоска ботаем"]
-WEEKENDS_WISHES = ["Выходные! Выходные! Я забыл прооо выходные", "Хороших выходных!", "Не забывай отдыхать!"]
-MONDAY_WISHES = ["С понедельничком!", "С началом рабочей недели!", "Это понедельник!", "Cнова понедельник!"]
+GOOD_MORNING_PHRASES = [
+    'Доброе утро!',
+    'С добрым утром!',
+    'Подъем!',
+    'Guten morgen!'
+]
+DEFAULT_WISHES = [
+    "Хорошего дня!",
+    "Отличной работы",
+    "Have a nice day!"
+]
+HARDWORK_WISHES = [
+    "За работу блин!",
+    "Вперед на завод!!!",
+    "Работаем + жоска ботаем"
+]
+WEEKENDS_WISHES = [
+    "Выходные! Выходные! Я забыл прооо выходные",
+    "Хороших выходных!",
+    "Не забывай отдыхать!"
+]
+MONDAY_WISHES = [
+    "С понедельничком!",
+    "С началом рабочей недели!",
+    "Это понедельник!",
+    "Cнова понедельник!"
+]
 
 
 class MorningSummary(AbstractPlugin):
-    _sending_time: datetime | tuple[datetime]
+    _send_dtime: datetime
     def __init__(self) -> None:
-        super().__init__()
-        self._name = "MorningSummary"
+        super().__init__("MorningSummary")
         self._notion = Notion()
-        self._sending_time = datetime(1, 1, 1, 8, 30)
+        self._send_dtime = dt_from_time(MORNING_MESSAGE_TIME)
 
-    @property
-    def sending_time(self) -> datetime | tuple[datetime]:
-        return self._sending_time
-    
-    @sending_time.setter
-    def sending_time(self, value: datetime | tuple[datetime]):
-        self._sending_time = value
+    def user_commands(self) -> CommandBindingsT:
+        return (
+            ("morning", self.morning_message),
+            ("morning_sendtime", self.clarify_send_time)
+        )
+
+    def daily_events(self) -> EventsScheduleT:
+        return (
+            (self._send_dtime, self.morning_message),
+        )
+
+    def monthly_events(self) -> EventsScheduleT:
+        return ()
+
+    def disordered_events(self) -> EventsScheduleT:
+        return ()
 
     def _fmt_event_time(self, event):
         result = ''
@@ -43,7 +74,7 @@ class MorningSummary(AbstractPlugin):
 
     def _gather_base_summary(self, calendar, current_tasks):
         lines = []
-        events = [] 
+        events = []
         now = datetime.now()
         for event in calendar:
             if now.date() == event['start'].date() or (now.date() >= event['start'].date()
@@ -61,7 +92,7 @@ class MorningSummary(AbstractPlugin):
             lines.append(protect_for_html(' > ' + task))
         lines[-1] = lines[-1] + '\n'
         return lines
-    
+
     def _say_goodmorning(self, message: list[str]):
         message.insert(0, choice(GOOD_MORNING_PHRASES))
         date_formated = datetime.now().date().strftime("%d %b %A")
@@ -78,24 +109,25 @@ class MorningSummary(AbstractPlugin):
             pool = pool + MONDAY_WISHES
         message.append(choice(pool))
 
-    async def morning_message(self, *args) -> str:
+    async def morning_message(self, *args) -> ActionResult:
         calendar = await self._notion.today_calendar_events()
         tasks = await self._notion.current_tasks()
         tasks = list(tasks.values())
         message_data = self._gather_base_summary(calendar, tasks)
         self._say_goodmorning(message_data)
         self._wish_goodday(message_data)
-        return "\n".join(message_data)
-    
-    @property
-    def message_callabacks(self) -> tuple[MessageCallbackTuple, ...]:
-        if isinstance(self.sending_time, datetime):
-            return ((self.sending_time, self.morning_message, 'daily'), )
-        return tuple( (st, self.morning_message, 'daily') 
-                     for st in self.sending_time)
-    
-    @property
-    def actions_callbacks(self) -> tuple[ActionsCallbackTuple, ...]:
-        return ()
+        return ActionResult("\n".join(message_data))
 
-plg = MorningSummary
+    async def clarify_send_time(self, *args) -> ActionResult:
+        if len(args) < 1:
+            return ActionResult(str(self._send_dtime.time()))
+        else:
+            return self.set_send_time(*args)
+
+    def set_send_time(self, *args) -> ActionResult:
+        new_time = time_from_args(args)
+        if isinstance(new_time, str):
+            return ActionResult(new_time)
+        self._send_dtime = dt_from_time(new_time)
+        return ActionResult("New morning message time: "
+                            f"{self._send_dtime.time()}")
