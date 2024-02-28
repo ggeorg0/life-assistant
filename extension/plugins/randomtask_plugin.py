@@ -41,7 +41,9 @@ class RandomCurrentTask(AbstractPlugin):
             message = f"The task \"{self._last_task_name}\" is marked as completed!"
         else:
             message = "There are no last task!"
-        return ActionResult(message=message)
+        return ActionResult(
+            message=protect_for_html(message)
+        )
 
     async def doagain_last_task(self, *args) -> ActionResult:
         if self._last_task_id:
