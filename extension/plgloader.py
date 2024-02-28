@@ -30,19 +30,19 @@ class PluginLoader:
         return plugins
 
     def _load_plugin_file(self, filename) -> list[AbstractPlugin]:
-            path, name = self._module_path_name(self._plugins_dir, filename)
+            path, name = self._get_path_name(self._plugins_dir, filename)
             spec = importlib.util.spec_from_file_location(name, path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             return self._fetch_plugins_from_module(module)
 
-    def _module_path_name(self, path: str, filename: str) -> tuple[Path, str]:
+    def _get_path_name(self, path: str, filename: str) -> tuple[Path, str]:
         filepath = Path(path, filename)
-        module_name = filename[:-3] # remove '.py'
+        module_name = filename[:-3]     # remove '.py'
         return filepath, module_name
 
     def _fetch_plugins_from_module(self, module):
-        module_dir = [v for v in dir(module) if not v.startswith('__')]
+        module_dir = [att for att in dir(module) if not att.startswith('__')]
         instances = []
         for obj in module_dir:
             module_attr = getattr(module, obj)

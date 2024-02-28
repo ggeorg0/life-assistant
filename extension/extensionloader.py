@@ -1,6 +1,6 @@
 from __future__ import annotations
 import logging
-from traceback import format_exception, print_exception
+from traceback import print_exception
 
 from telegram import Update
 from telegram.ext import (
