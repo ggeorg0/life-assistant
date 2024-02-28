@@ -3,7 +3,7 @@ import logging
 from collections.abc import Callable, Iterable
 from datetime import datetime
 
-from extension.abstractplugin import AbstractPlugin
+from extension import AbstractPlugin, ActionResult
 
 
 class PluginManager:
@@ -27,6 +27,14 @@ class PluginManager:
                 logging.info(f"Plugin Manager: skipping [{plg_name}]"
                              " (not enabled)")
 
+    def manage_commands(self) -> Iterable[tuple[str, Callable]]:
+        return (
+            ("enable", self.enable_plugin),
+            ("disable", self.disable_plugin),
+            ("plugins", self.list_plugins),
+            ("pl", self.list_plugins)
+        )
+
     def daily_events(self) -> Iterable[tuple[str, datetime, Callable]]:
         logging.info("Plugin Manager: loading daily events")
         for plg_name, p in self._loaded_plugins.items():
@@ -47,7 +55,6 @@ class PluginManager:
                 logging.info(f"Plugin Manager: skipping [{plg_name}]"
                              " (not enabled)")
 
-
     def disorder_events(self) -> Iterable[tuple[str, datetime, Callable]]:
         logging.info("Plugin Manager: loading disordered events")
         for plg_name, p in self._loaded_plugins.items():
@@ -58,16 +65,49 @@ class PluginManager:
                 logging.info(f"Plugin Manager: skipping [{plg_name}]"
                              " (not enabled)")
 
-
     def set_plugins(self, plugins: Iterable[AbstractPlugin]):
         self._loaded_plugins = {p.name: p for p in plugins}
 
     def _get_plugin(self, name):
         return self._loaded_plugins[name]
 
-    def enable_plugin(self, name):
+    async def enable_plugin(self, *args):
+        """User command for enabling plugin by name (args)"""
+        return self._switch_plugin(self._enable_plugin, "enabled now", *args)
+
+    async def disable_plugin(self, *args):
+        """User command for disabling plugin by name (args)"""
+        return self._switch_plugin(self._diable_plugin, "disabled now", *args)
+
+    def _switch_plugin(self, switcher, success_message: str, *args):
+        """Wrapper for _enable and _disable methods"""
+        try:
+            plugin_name = " ".join(args)
+            switcher(plugin_name)
+            return ActionResult(f"[{plugin_name}] is {success_message}")
+        except (IndexError, KeyError):
+                return ActionResult(
+                    "Error: you must specify correct plugin name\n"
+                    "Hint: use /plugins to see loaded plugins"
+                )
+
+    async def list_plugins(self) -> ActionResult:
+        """User command for lising loaded plugins"""
+        message = ['<pre>']     # <pre> - HTML formatting of code
+        message.append(f"{'Plugin Name':20} {'Enabled':7}")
+        message.append('-' * 29)
+        for name, plg in self._loaded_plugins.items():
+            enabled = self.to_YesNo(plg.isenabled)
+            message.append(f"{name:20} {enabled:>7}")
+        message.append('</pre>')
+        return ActionResult('\n'.join(message))
+
+    def to_YesNo(self, value: bool):
+        return "YES" if value else "NO"
+
+    def _enable_plugin(self, name):
         self._get_plugin(name).enable()
 
-    def diable_plugin(self, name):
+    def _diable_plugin(self, name):
         self._get_plugin(name).disable()
 

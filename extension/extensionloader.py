@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from traceback import format_exception, print_exception
 
 from telegram import Update
 from telegram.ext import (
@@ -25,7 +26,7 @@ class ExtensionLoader:
     _plg_manager: PluginManager
     _plg_loader: PluginLoader
 
-    def __init__(self, plugins_dir: str) -> None:
+    def __init__(self) -> None:
         self._plg_manager = PluginManager()
         self._plg_loader = PluginLoader(PLUGINS_DIR)
 
@@ -38,6 +39,10 @@ class ExtensionLoader:
             callback = self.make_command_callback(action, plg_name)
             app.add_handler(CommandHandler(cmd, callback))
             logging.info(f"[{plg_name}]: adding command /{cmd}")
+        for cmd, action in self._plg_manager.manage_commands():
+            callback = self.make_command_callback(action, 'Plugin Manager')
+            app.add_handler(CommandHandler(cmd, callback))
+            logging.info(f"Plugin Manager: adding command /{cmd}")
 
     def make_command_callback(self, action: ActionT, plg_name: str):
         @validate_user
@@ -48,7 +53,8 @@ class ExtensionLoader:
                 act_result = await action(*command_args)
             except Exception as e:
                 logging.error(f"[{plg_name}] user triggered action "
-                              f"'{action.__name__}' FAILED \n{e}")
+                              f"'{action.__name__}' FAILED")
+                print_exception(e)
                 return None
             if act_result.message:
                 await context.bot.send_message(
@@ -107,7 +113,8 @@ class ExtensionLoader:
                 act_result = await action()
             except Exception as e:
                 logging.error(f"[{plg_name}] triggered action "
-                              f"'{action.__name__}' FAILED \n{e}")
+                              f"'{action.__name__}' FAILED")
+                print_exception(e)
                 return None
             if act_result.message:
                 await context.bot.send_message(
