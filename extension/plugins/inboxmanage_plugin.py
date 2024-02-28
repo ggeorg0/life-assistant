@@ -3,7 +3,7 @@ import logging
 from extension import AbstractPlugin, ActionResult
 from extension.exttypes import CommandBindingsT, EventsScheduleT
 from notion import Notion
-# from tools import protect_for_html
+from tools import protect_for_html
 from config import (
     INBOX_LAST_N
 )
@@ -15,7 +15,7 @@ class InboxManagement(AbstractPlugin):
     _notion: Notion
 
     def __init__(self):
-        super().__init__("Inbox Management")
+        super().__init__("InboxManagement")
         self._notion = Notion()
 
     def user_commands(self) -> CommandBindingsT:
@@ -23,19 +23,19 @@ class InboxManagement(AbstractPlugin):
             ("delete_last", self.delete_last_n),
             ("delete", self.delete_last_n),
             ("del_last", self.delete_last_n),
-            ("inbox", self.last_tasks)
+            ("inbox", self.last_tasks),
+            ("last", self.last_tasks)
         )
 
     async def last_tasks(self, *args) -> ActionResult:
-        # TODO: move code from `_notion.last_inbox_pages` here
-        if len(args) < 1:
-            tasks_number = INBOX_LAST_N
-        else:
+        try:
             tasks_number = int(args[0])
+        except (ValueError, IndexError):
+            tasks_number = INBOX_LAST_N
         titles = await self._notion.last_inbox_pages(tasks_number)
-        #   it is already in `_notion.last_inbox_pages`, wich is not good:
-        # titles = map(protect_for_html, titles) --
-        return ActionResult("\n".join(titles))
+        titles = list(map(protect_for_html, titles))
+        message = ["<b>List of tasks</b>"] + titles
+        return ActionResult("\n".join(message))
 
     async def delete_last_n(self, *args) -> ActionResult:
         if len(args) < 1:

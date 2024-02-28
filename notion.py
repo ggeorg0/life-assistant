@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from typing import Sequence, TypeVar
+from typing import Sequence
 
 from notion_client import AsyncClient, APIErrorCode, APIResponseError
 from notion_client.helpers import async_iterate_paginated_api, is_full_page
@@ -41,15 +41,15 @@ class Notion():
                     "direction": "descending"}],
             page_size=n_pages
         )
-        titles = ["<b>List of tasks</b>"]
+        titles = []
         for i, task in enumerate(results["results"]):
             if is_full_page(task):
                 task_title = task["properties"]["Name"]["title"]
                 if task_title:
-                    line = f"{i + 1}. {task_title[0]['plain_text']}"
-                    titles.append(protect_for_html(line))
+                    line = f"{i+1:>3d}. {task_title[0]['plain_text']}"
+                    titles.append(line)
         if results["next_cursor"] != None:
-            titles.append("<b>Visit Notion to see full list...</b>")
+            titles.append("Visit Notion to see full list...")
         return titles
 
     async def archive_n_pages(self, count=1):
