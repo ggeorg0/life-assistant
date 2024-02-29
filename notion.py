@@ -15,7 +15,7 @@ from config import (
     WEEKDAYS
 )
 
-from tools import protect_for_html, singleton
+from tools import singleton
 
 PairTime = tuple[int, tuple[int, int], tuple[int, int]]
 PairProperties = tuple[int, PairTime, str, str, str]

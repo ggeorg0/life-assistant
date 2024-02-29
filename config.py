@@ -44,9 +44,13 @@ PAIR_SCHEDULE = [[1, (9, 00), (10, 30)],
 
 WEEKDAYS = {"Пн": 1, "Вт": 2, "Ср": 3, "Чт": 4, "Пт": 5, "Сб": 6, "Вс": 7}
 
+## MorningMessage plugin
+# moring message time
+MORNING_MESSAGE_TIME = time(hour=8, minute=10, second=0)
+
 ## UniSchedule plugin
 # send time of today university schedule
-TODAY_SCHED_TIME = time(hour=8, minute=10, second=0)
+TODAY_SCHED_TIME = time(hour=8, minute=10, second=15)
 # send time of tomorrow university schedule
 TOMMOROW_SCHED_TIME = time(hour=22, minute=30, second=10)
 

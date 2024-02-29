@@ -17,3 +17,4 @@
 
 # Future:
     - [ ] Delete past events from calendar
+    - [ ] Advanced Logging (fix loggin levels, remove INFO for httpx)

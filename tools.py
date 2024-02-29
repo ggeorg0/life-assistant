@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 from config import TG_CHAT_ID, TIMEZONE
 
 TIMESET_HELP_MSG = "You should provide your command \
-with hours minutes ands seconds in this fashon:\n \
-/your_command HH MM SS \
+with hours minutes and seconds in this fashon:\n \
+/your_command HH:MM:SS \
 "
 
 def validate_user(func):
@@ -18,7 +18,6 @@ def validate_user(func):
             return await func(update, *args, **kwargs)
 
     return wrapper
-
 
 def protect_for_html(text_data):
     return text_data.replace('&', '&amp;')\
@@ -35,10 +34,8 @@ def singleton(cls, *args, **kw):
 
 def time_from_args(args: Sequence) -> time | str:
     try:
-        hours = int(args[0])
-        minutes = int(args[1])
-        seconds = int(args[2])
-        return time(hours, minutes, seconds)
+        digits = map(int, args[0].split(':'))
+        return time(*digits, tzinfo=TIMEZONE)
     except IndexError:
         return TIMESET_HELP_MSG
     except ValueError as ve:
