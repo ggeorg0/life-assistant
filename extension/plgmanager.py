@@ -7,6 +7,16 @@ from extension import AbstractPlugin, ActionResult
 
 
 class PluginManager(AbstractPlugin):
+    """
+    Manage loaded plugins.
+    Note: This class is inherited from `AbstractPlugin`
+    because the user needs to manage plugins with commands like
+        `/enable <PluginName>`
+        `/disable <PluginName>`
+        `/plugins` ... \n
+    and `ExtensionLoader` wants to get `AbstractPlugin`
+    instances to add new commands to the bot.
+    """
     # Singletone class
     _ids = count(0)
     _loaded_plugins: dict[str, AbstractPlugin]
@@ -116,4 +126,8 @@ class PluginManager(AbstractPlugin):
 
     def disable(self):
         logging.error("It is not possible to disable the PluginManager")
+
+    def help(self):
+        # TODO!!!
+        ...
 
