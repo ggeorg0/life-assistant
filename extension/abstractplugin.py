@@ -63,10 +63,10 @@ class AbstractPlugin(metaclass=ABCMeta):
         ```
         def help:
             return {
-                "this command do very cool action":
-                    ('/command', '/commandalias'),
+                "this command do a very cool action":
+                    ('/command <param1> <param2>', '/commandalias'),
                 "another command's description":
-                    ('/anothercommand')
+                    ('/anothercommand', )
             }
         ```
         """
