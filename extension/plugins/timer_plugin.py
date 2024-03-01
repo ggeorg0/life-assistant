@@ -17,6 +17,12 @@ class TimerPlugin(AbstractPlugin):
             ("settimer", self.set_timer),
         )
 
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        return {
+            "Set timer. Send HH:MM:SS: or HH:MM as argument":
+                ('/timerset <time>', '/settimer <time>'),
+        }
+
     async def set_timer(self, *args) -> ActionResult:
         ttime = time_from_args(args)
         if isinstance(ttime, str):

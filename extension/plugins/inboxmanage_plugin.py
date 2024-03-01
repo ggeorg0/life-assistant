@@ -50,6 +50,13 @@ class InboxManagement(AbstractPlugin):
             logging.error(f"[Inbox Managenet]: {e}")
             return ActionResult(f"Some error occured during deletion")
 
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        return {
+            "delete last N tasks from inbox":
+                ('/delete <n>', '/delete_last <n>', '/del_last <N>'),
+            "show last N (default is 10) tasks in inbox":
+                ('/inbox [n]', '/last [n]'),
+        }
 
     def daily_events(self) -> EventsScheduleT:
         return ()
