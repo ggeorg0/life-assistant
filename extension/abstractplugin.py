@@ -54,6 +54,23 @@ class AbstractPlugin(metaclass=ABCMeta):
         """
         ...
 
+    @abstractmethod
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        """
+        Return `dict` of command descriptions with their aliases.
+
+        Example of `help`:
+        ```
+        def help:
+            return {
+                "this command do very cool action":
+                    ('/command', '/commandalias'),
+                "another command's description":
+                    ('/anothercommand')
+            }
+        ```
+        """
+        ...
 
     def enable(self):
         """Enable plugin.
@@ -87,14 +104,4 @@ class AbstractPlugin(metaclass=ABCMeta):
         return datetime.now(tz=TIMEZONE)
 
 
-    ### plugin actions ###
 
-    async def help(self, *args) -> ActionResult:
-        """
-        Send help message to the user.
-        To make this actually work,
-        this method must be returned by `self.user_commands`.
-
-        This is also simple example of plugin action
-        """
-        return ActionResult(message="default help message")
