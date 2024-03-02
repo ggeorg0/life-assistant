@@ -30,6 +30,13 @@ class ExtensionLoader:
         self._plg_manager = PluginManager()
         self._plg_loader = PluginLoader(PLUGINS_DIR)
 
+    def load(self, app: Application):
+        self.load_plugins()
+        self.load_commands(app)
+        self.load_daily_events(app)
+        self.load_monthly_events(app)
+        self.load_disordered_events(app)
+
     def load_plugins(self):
         plugins = self._plg_loader.load()
         self._plg_manager.set_plugins(plugins)
