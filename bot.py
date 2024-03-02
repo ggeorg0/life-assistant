@@ -31,7 +31,7 @@ CANNOTSEND_MSG = "Cannot send a message"
 logging.basicConfig(
         format='%(asctime)s %(levelname)s %(name)s - %(message)s',
         level=logging.INFO,
-        datefmt='%y-%m-%d %H:%M:%S',
+        datefmt='%y/%m/%d %H:%M:%S',
 )
 
 nnotion: Notion
@@ -64,11 +64,11 @@ async def add_to_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                        f'{CANNOTSEND_MSG}: {safe_text}')
 
 if __name__ == "__main__":
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+
     nnotion = Notion()
 
-    defaults = Defaults(tzinfo=TIMEZONE,
-                        parse_mode='HTML')
-
+    defaults = Defaults(tzinfo=TIMEZONE, parse_mode='HTML')
     app = ApplicationBuilder().token(BOT_TOKEN) \
                               .defaults(defaults) \
                               .build()

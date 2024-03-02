@@ -28,9 +28,13 @@
 - [ ] Add `Readme.md`
 - [ ] Update or remove `main.py` file (useless)
 
+# Logging
+- [X] use `Logger.exception()` instead of Logger.error() in some places
+     to print stack trace.
+- [X] hide INFO for httpx
+
 # Readme
 #### not exists yet
 
 # Future:
 - [ ] Delete past events from calendar
-- [ ] Advanced Logging (fix loggin levels, remove INFO for httpx)

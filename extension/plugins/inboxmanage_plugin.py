@@ -47,7 +47,7 @@ class InboxManagement(AbstractPlugin):
         except ValueError:
             return ActionResult(f"Invalid number of pages: {args[0]}")
         except Exception as e:
-            logging.error(f"[Inbox Managenet]: {e}")
+            logging.exception(f"[Inbox Managenet]: {e}")
             return ActionResult(f"Some error occured during deletion")
 
     def help(self, *args) -> dict[str, tuple[str, ...]]:

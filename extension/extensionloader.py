@@ -1,6 +1,5 @@
 from __future__ import annotations
 import logging
-from traceback import print_exception
 
 from telegram import Update
 from telegram.ext import (
@@ -54,10 +53,9 @@ class ExtensionLoader:
             command_args = context.args or ()
             try:
                 act_result = await action(*command_args)
-            except Exception as e:
-                logging.error(f"[{plg.name}] user triggered action "
-                              f"'{action.__name__}' FAILED")
-                print_exception(e)
+            except Exception:
+                logging.exception(f"[{plg.name}] user triggered action "
+                                  f"'{action.__name__}' FAILED")
                 return None
             if act_result.message:
                 await context.bot.send_message(
@@ -116,10 +114,9 @@ class ExtensionLoader:
                 return
             try:
                 act_result = await action()
-            except Exception as e:
-                logging.error(f"[{plg.name}] triggered action "
-                              f"'{action.__name__}' FAILED")
-                print_exception(e)
+            except Exception:
+                logging.exception(f"[{plg.name}] triggered action "
+                                  f"'{action.__name__}' FAILED")
                 return None
             if act_result.message:
                 await context.bot.send_message(
