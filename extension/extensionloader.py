@@ -15,8 +15,6 @@ from extension.exttypes import ActionT
 from config import TG_CHAT_ID, PLUGINS_DIR
 from tools import validate_user
 
-# TODO: automatic help command by all plugins
-
 
 class ExtensionLoader:
     __slots__ = (
