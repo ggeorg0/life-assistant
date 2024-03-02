@@ -2,7 +2,7 @@ import logging
 
 from extension import AbstractPlugin, ActionResult
 from extension.exttypes import CommandBindingsT, EventsScheduleT
-from notion import Notion
+from mynotion import Notion
 from tools import protect_for_html
 from config import INBOX_LAST_N
 
