@@ -54,7 +54,7 @@ class UniSchedule(AbstractPlugin):
                 ('/yschedule', ),
             "Tommorow's schedule":
                 ('/tschedule', ),
-            "Set schedule send today's, tommorow's,time ":
+            "Set schedule send today's tommorow's,time ":
                 ('/schedule_settime <time>', '/tschedule_settime <time>'),
             "Toggle tommorow's schedule send":
                 ('/tschedule_togglesend', ),

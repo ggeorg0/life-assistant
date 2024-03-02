@@ -53,7 +53,7 @@ class InboxManagement(AbstractPlugin):
     def help(self, *args) -> dict[str, tuple[str, ...]]:
         return {
             "delete last N tasks from inbox":
-                ('/delete <n>', '/delete_last <n>', '/del_last <N>'),
+                ('/delete <n>', '/delete_last <n>', '/del_last <n>'),
             "show last N (default is 10) tasks in inbox":
                 ('/inbox [n]', '/last [n]'),
         }

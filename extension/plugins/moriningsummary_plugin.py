@@ -55,7 +55,7 @@ class MorningSummary(AbstractPlugin):
                 ('/morning', ),
             "Update \"morning message\" sending time. "
             "Send it without arguments to find out the current value":
-                ('/morning_sendtime <time>', ),
+                ('/morning_sendtime [time]', ),
         }
 
     def daily_events(self) -> EventsScheduleT:
