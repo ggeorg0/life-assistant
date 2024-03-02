@@ -2,7 +2,6 @@ import logging
 import importlib.util
 from inspect import isclass
 from pathlib import Path
-import traceback
 import os
 
 from extension import AbstractPlugin
@@ -25,8 +24,7 @@ class PluginLoader:
             try:
                 plugins += self._load_plugin_file(pf)
             except Exception as e:
-                logging.error(f"cannot load file `{pf}`, reason:\n"
-                              f"{''.join(traceback.format_exception(e))}")
+                logging.exception(f"cannot load file `{pf}`, reason:\n")
         return plugins
 
     def _load_plugin_file(self, filename) -> list[AbstractPlugin]:
