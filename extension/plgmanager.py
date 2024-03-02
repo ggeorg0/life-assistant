@@ -123,7 +123,7 @@ class PluginManager(AbstractPlugin):
 
     def _diable_plugin(self, name):
         if name == self.name:
-            return ActionResult("You cannot turn off PluginManager")
+            return ActionResult(f"You cannot turn off {self.name}")
         self._get_plugin(name).disable()
         return ActionResult(f"[{name}] is disabled now")
 
@@ -139,7 +139,7 @@ class PluginManager(AbstractPlugin):
         return ActionResult('\n'.join(message))
 
     def disable(self):
-        logging.error("It is not possible to disable the PluginManager")
+        logging.error(f"It is not possible to disable the {self.name}")
 
     async def gather_help(self) -> ActionResult:
         """

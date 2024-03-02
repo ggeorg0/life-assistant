@@ -3,7 +3,7 @@ from datetime import datetime
 
 from extension import AbstractPlugin, ActionResult
 from extension.exttypes import CommandBindingsT, EventsScheduleT
-from notion import Notion
+from mynotion import Notion
 from tools import protect_for_html, dt_from_time, time_from_args
 from config import MORNING_MESSAGE_TIME
 

@@ -15,8 +15,6 @@ from extension.exttypes import ActionT
 from config import TG_CHAT_ID, PLUGINS_DIR
 from tools import validate_user
 
-# TODO: automatic help command by all plugins
-
 
 class ExtensionLoader:
     __slots__ = (
@@ -29,6 +27,13 @@ class ExtensionLoader:
     def __init__(self) -> None:
         self._plg_manager = PluginManager()
         self._plg_loader = PluginLoader(PLUGINS_DIR)
+
+    def load(self, app: Application):
+        self.load_plugins()
+        self.load_commands(app)
+        self.load_daily_events(app)
+        self.load_monthly_events(app)
+        self.load_disordered_events(app)
 
     def load_plugins(self):
         plugins = self._plg_loader.load()

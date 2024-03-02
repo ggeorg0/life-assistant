@@ -31,8 +31,13 @@ CURRENT_TASKS_ID = load_env_var("CURRENT_TASKS_ID")
 UNI_SCHEDULE = load_env_var("UNI_SCHEDULE_ID")
 DONE_LIST_ID = load_env_var("DONE_LIST_ID")
 
-# other hyperparameters
-DEPTH_LIMIT = 16
+# max number of tries to send task to the Notion
+# ! Note: time between tries grows exponentially
+TRY_SEND_LIMIT = 5
+# Initital time between unsuccessufl tries of send task to the Notion
+# ! Note: time between tries grows exponentially
+INITIAL_SEND_TIMING = 10
+
 PAGE_SIZE = 25
 
 PAIR_SCHEDULE = [[1, (9, 00), (10, 30)],

@@ -6,7 +6,7 @@ from typing import Any
 from extension import AbstractPlugin, ActionResult
 from extension.exttypes import ActionT, CommandBindingsT, EventsScheduleT
 from tools import protect_for_html
-from notion import Notion
+from mynotion import Notion
 
 class RandomCurrentTask(AbstractPlugin):
     __slots__ = (

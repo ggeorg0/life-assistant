@@ -1,9 +1,10 @@
 # Plugins
+- move some funcs from tools to `AbstractPlugin`
 - [ ] Use time instead of datetime in daily events
           (don't foget to update UniSchedule and others)
 - [X] Plugin ON and OFF commands
 - [X] Process is plugin enabled or not
-- [ ] Reload plugins
+- [ ] Reload plugins with user command
 
 ## InboxManagement
 - [x] Fix TODO: move code from my Notion class to plugin methods
@@ -11,6 +12,12 @@
 
 ## MorningSummary
 - [X] Rewrite with new architecture
+
+## UniSchedule
+- [ ] Add day argument to /schedule:
+        /schedule 0  - today
+        /schedule 1  - tomorrow
+        /schedule -1  - yesterday
 
 # Bot
 - [X] Delete comments

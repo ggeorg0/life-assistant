@@ -2,12 +2,11 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 
 from config import TIMEZONE
-from extension import ActionResult
 from extension.exttypes import EventsScheduleT, CommandBindingsT
 
-# TODO: make examples for docstrings
-
 class AbstractPlugin(metaclass=ABCMeta):
+    """Abstract base class for your fancy plugin.
+    """
     __slots__ = ("_enabled", "_name")
     _enabled: bool
     _name: str
@@ -19,7 +18,9 @@ class AbstractPlugin(metaclass=ABCMeta):
     @abstractmethod
     def user_commands(self) -> CommandBindingsT:
         """Return sequence of user's command name and actions pairs.
-        Action is usualy a plugin method.
+
+        Action should be a function defined with `async`
+        and return instance of `ActionResult`.
         """
         ...
 
@@ -27,8 +28,10 @@ class AbstractPlugin(metaclass=ABCMeta):
     def daily_events(self) -> EventsScheduleT:
         """Daily scheduled plugin events.
 
-        Return sequence of time and action pairs
-        (action is usualy a plugin method)
+        Return a sequence of pairs: `datetime`, action
+
+        Action should be a function defined with `async`
+        and return instance of `ActionResult
         """
         ...
 
@@ -36,8 +39,11 @@ class AbstractPlugin(metaclass=ABCMeta):
     def monthly_events(self) -> EventsScheduleT:
         """Monthly scheduled plugin events.
 
-        Return sequence of datetime and action pairs
-        (action is usualy a plugin method).
+        Return a sequence of pairs: `datetime`, action.
+
+        Action should be a function defined with `async`
+        and return instance of `ActionResult.
+
         Note: `year` and `month` parts of the
         `datetime` will be ignored.
         """
@@ -49,8 +55,10 @@ class AbstractPlugin(metaclass=ABCMeta):
         Scheduled time of execution can be pretty chaotic,
         because it depends on the specific plugin.
 
-        Return sequence of datetime and action pairs
-        (action is usualy a plugin method).
+        Return a sequence of pairs: `datetime`, action.
+
+        Action should be a function defined with `async`
+        and return instance of `ActionResult.
         """
         ...
 
@@ -89,9 +97,8 @@ class AbstractPlugin(metaclass=ABCMeta):
     @property
     def isenabled(self):
         """Show is the plugin enabled or not.
-        Important note: by default, this does not affect the behavior
-        of the plugin itself. The presence or absence of any actions
-        depending on this property should be handled in other classes.
+        Important note: The presence or absence of any actions
+        depending on this property handled in other classes.
         """
         return self._enabled
 
