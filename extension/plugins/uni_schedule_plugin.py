@@ -42,9 +42,23 @@ class UniSchedule(AbstractPlugin):
             ("yschedule", self.yesterday),
             ("tschedule", self.tomorrow),
             ("schedule_settime", self.set_sending_time),
-            ("tschedule_send", self.toggle_send_tomorrow),
             ("tschedule_settime", self.set_tm_sending_time),
+            ("tschedule_togglesend", self.toggle_send_tomorrow),
         )
+
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        return {
+            "Today's schedule":
+                ('/schedule', ),
+            "Yesterday's schedule":
+                ('/yschedule', ),
+            "Tommorow's schedule":
+                ('/tschedule', ),
+            "Set schedule send today's tommorow's,time ":
+                ('/schedule_settime <time>', '/tschedule_settime <time>'),
+            "Toggle tommorow's schedule send":
+                ('/tschedule_togglesend', ),
+        }
 
     def daily_events(self) -> EventsScheduleT:
         td_datetime = dt_from_time(self._td_send_time)

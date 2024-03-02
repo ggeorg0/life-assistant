@@ -4,9 +4,20 @@ from collections.abc import Callable, Iterable
 from datetime import datetime
 
 from extension import AbstractPlugin, ActionResult
+from tools import protect_for_html
 
 
 class PluginManager(AbstractPlugin):
+    """
+    Manage loaded plugins.
+    Note: This class is inherited from `AbstractPlugin`
+    because the user needs to manage plugins with commands like
+        `/enable <PluginName>`
+        `/disable <PluginName>`
+        `/plugins` ...
+    and `ExtensionLoader` wants to get `AbstractPlugin`
+    instances to add new commands to the bot.
+    """
     # Singletone class
     _ids = count(0)
     _loaded_plugins: dict[str, AbstractPlugin]
@@ -35,8 +46,21 @@ class PluginManager(AbstractPlugin):
             ("enable", self.enable_plugin),
             ("disable", self.disable_plugin),
             ("plugins", self.list_plugins),
-            ("pl", self.list_plugins)
+            ("pl", self.list_plugins),
+            ("help", self.gather_help),
         )
+
+    def help(self) -> dict[str, tuple[str, ...]]:
+        return {
+            "Enable plugin <plgName>":
+                ('/enable <plgName>', ),
+            "Disable plugin <plgName>":
+                ('/disable <plgName>', ),
+            "List all plugins":
+                ('/plugins', '/pl'),
+            "Show this help message":
+                ('/help', )
+        }
 
     def daily_events(self) -> Iterable[tuple[AbstractPlugin, datetime, Callable]]:
         logging.info("Plugin Manager: loading daily events")
@@ -116,4 +140,28 @@ class PluginManager(AbstractPlugin):
 
     def disable(self):
         logging.error("It is not possible to disable the PluginManager")
+
+    async def gather_help(self) -> ActionResult:
+        """
+        User command to send help message
+        (concatenate `help` from all plugins).
+        """
+        message = ['<b>Help message</b>\n']
+        plugins = [self] + list(self._loaded_plugins.values())
+        for plg in plugins:
+            message.append(f"\n<b>{plg.name}:</b>")
+            message += self._fmt_plg_help(plg.help())
+        return ActionResult('\n'.join(message))
+
+    def _fmt_plg_help(self, desc_and_aliases):
+        lines = []
+        for desc, aliases in desc_and_aliases.items():
+            line = ' '.join(aliases) + ' - ' + desc
+            lines.append(protect_for_html(line))
+        return lines
+
+
+
+
+
 

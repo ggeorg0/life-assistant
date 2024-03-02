@@ -49,6 +49,15 @@ class MorningSummary(AbstractPlugin):
             ("morning_sendtime", self.clarify_send_time)
         )
 
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        return {
+            "Show \"morning message\" now":
+                ('/morning', ),
+            "Update \"morning message\" sending time. "
+            "Send it without arguments to find out the current value":
+                ('/morning_sendtime [time]', ),
+        }
+
     def daily_events(self) -> EventsScheduleT:
         return (
             (self._send_dtime, self.morning_message),

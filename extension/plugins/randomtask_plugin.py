@@ -63,6 +63,16 @@ class RandomCurrentTask(AbstractPlugin):
             ("undone", self.doagain_last_task)
         )
 
+    def help(self, *args) -> dict[str, tuple[str, ...]]:
+        return {
+            "Random task from `Current Tasks` notion list":
+                ('/rtask', '/task'),
+            "Mark as complete last random task":
+                ('/done', ),
+            "Мark as incomplete last random task":
+                ('/undone', ),
+        }
+
     def daily_events(self) -> EventsScheduleT:
         return ()
 
