@@ -78,34 +78,33 @@ class Notion():
 
     async def today_calendar_events(self):
         events = []
-        async for block in async_iterate_paginated_api(
-            self._client.databases.query, database_id=CALENDAR_DATABASE_ID
+        async for page in async_iterate_paginated_api(
+            self._client.databases.query,
+            database_id=CALENDAR_DATABASE_ID
         ):
-            for p in block:
-                event = {}
-                props = p["properties"]
-                if props["Name"]["title"]:
-                    event['title'] = props["Name"]["title"][0]['plain_text']
-                    date = props["Date"]['date']
-                    if date:
-                        event['start'] = datetime.fromisoformat(date['start'])
-                        event['end'] = date['end']
-                        if event['end']:
-                            event['end'] = datetime.fromisoformat(event['end'])
-                        events.append(event)
+            event = {}
+            props = page["properties"]
+            if props["Name"]["title"]:
+                event['title'] = props["Name"]["title"][0]['plain_text']
+                date = props["Date"]['date']
+                if date:
+                    event['start'] = datetime.fromisoformat(date['start'])
+                    event['end'] = date['end']
+                    if event['end']:
+                        event['end'] = datetime.fromisoformat(event['end'])
+                    events.append(event)
         return events
 
     async def current_tasks(self) -> dict[str, str]:
         tasks = {}
-        async for block in async_iterate_paginated_api(
+        async for page in async_iterate_paginated_api(
             self._client.databases.query, database_id=CURRENT_TASKS_ID
         ):
-            for p in block:
-                props = p["properties"]
-                id = p['id']
-                if props["Name"]["title"]:
-                    task_title = props["Name"]["title"][0]['plain_text']
-                    tasks[id] = task_title
+            props = page["properties"]
+            id = page['id']
+            if props["Name"]["title"]:
+                task_title = props["Name"]["title"][0]['plain_text']
+                tasks[id] = task_title
         return tasks
 
 
