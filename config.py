@@ -1,5 +1,5 @@
 import os
-from datetime import time
+from datetime import time, date
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
@@ -58,6 +58,8 @@ MORNING_MESSAGE_TIME = time(hour=8, minute=10, second=0)
 TODAY_SCHED_TIME = time(hour=8, minute=10, second=15)
 # send time of tomorrow university schedule
 TOMMOROW_SCHED_TIME = time(hour=22, minute=30, second=10)
+# date of first schedule week (for checking even/odd)
+FIRST_SCHEDULE_WEEK = date(year=2024, month=2, day=5)
 
 ## Inbox Manager Plugin
 # default number of resent tasks obtained from inbox
