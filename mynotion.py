@@ -108,7 +108,7 @@ class Notion():
         return tasks
 
 
-    async def uni_daily_schedule(self, day: date) -> Sequence[PairProperties]:
+    async def uni_daily_schedule(self, day: date, even_week: bool) -> Sequence[PairProperties]:
         results = await self._client.databases.query(database_id=UNI_SCHEDULE)
         weekday = day.weekday()
         daily_schedule = []
@@ -121,8 +121,13 @@ class Notion():
             subject = props['Предмет']['title'][0]['plain_text']
             lecturer = props['Преподаватель']['rich_text'][0]['plain_text']
             auditory = props['Кабинет']['rich_text'][0]['plain_text']
+            is_entry_odd = props['Неделя']['select']['name'] == 'Нечетная'
+            is_entry_even = props['Неделя']['select']['name'] == 'Четная'
 
-            if page_weekday-1 == weekday:
+            if (page_weekday-1 == weekday 
+                and (even_week and is_entry_even
+                     or not even_week and is_entry_odd
+                     or is_entry_even is is_entry_odd)):
                 daily_schedule.append( (pair_num, PAIR_SCHEDULE[pair_num - 1],
                                        subject, lecturer, auditory) )
         return daily_schedule

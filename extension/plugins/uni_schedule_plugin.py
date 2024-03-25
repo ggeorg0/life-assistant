@@ -9,6 +9,7 @@ from config import (
     TODAY_SCHED_TIME,
     TOMMOROW_SCHED_TIME,
     TIMEZONE,
+    FIRST_SCHEDULE_WEEK
 )
 
 class UniSchedule(AbstractPlugin):
@@ -57,7 +58,7 @@ class UniSchedule(AbstractPlugin):
             "Set schedule send today's tommorow's,time ":
                 ('/schedule_settime <time>', '/tschedule_settime <time>'),
             "Toggle tommorow's schedule send":
-                ('/tschedule_togglesend', ),
+                ('/tschedule_togglesend [ON/OFF]', ),
         }
 
     def daily_events(self) -> EventsScheduleT:
@@ -73,16 +74,20 @@ class UniSchedule(AbstractPlugin):
 
     def disordered_events(self) -> EventsScheduleT:
         return ()
+    
+    def even_week(self, curdate: date) -> bool:
+        days_diff = (curdate - FIRST_SCHEDULE_WEEK).days
+        return days_diff // 7 % 2 != 0
 
-    async def form_schedule_message(self, day: date) -> str:
-        daily_schedule = await self._notion.uni_daily_schedule(day)
-        daily_schedule = sorted(daily_schedule)
+    async def fmt_schedule_message(self, day: date) -> str:
+        schedule = await self._notion.uni_daily_schedule(day, self.even_week(day))
+        schedule = sorted(schedule)
         message = ["%-2s %-5s %-7s %-20s" % ("#", "нач.", "каб.", "предмет"),
                    "-"*38]
         timeline_flag = True
-        for num, pair_time, subj, _, auditory in daily_schedule:
+        for num, pair_time, subj, _, auditory in schedule:
             ptime = time(*pair_time[1], tzinfo=TIMEZONE)
-            message_line = "%-2s %-2s:%-2s %-7s %-20s" % (
+            message_line = "%-2s %02d:%02d %-7s %-20s" % (
                 num,
                 ptime.hour, ptime.minute,
                 auditory,
@@ -99,16 +104,16 @@ class UniSchedule(AbstractPlugin):
         return "<pre>" + '\n'.join(message) + "</pre>"
 
     async def today(self, *args) -> ActionResult:
-        message=await self.form_schedule_message(date.today())
+        message=await self.fmt_schedule_message(date.today())
         return ActionResult("Расписание на сегодня:\n" + message)
 
     async def tomorrow(self, *args) -> ActionResult:
-        message = await self.form_schedule_message(date.today()
+        message = await self.fmt_schedule_message(date.today()
                                                    + timedelta(days=1))
         return ActionResult("Расписание на завтра:\n" + message)
 
     async def yesterday(self, *args) -> ActionResult:
-        message=await self.form_schedule_message(date.today()
+        message=await self.fmt_schedule_message(date.today()
                                                  - timedelta(days=1))
         return ActionResult("Вчерашнее расписание:\n" + message)
 
