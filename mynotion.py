@@ -66,17 +66,7 @@ class Notion():
     async def unarchive_page(self, id: str):
         await self._client.pages.update(page_id=id, archived=False)
 
-    async def move_to_done(self, id: str):
-        """Actually, this method archives page
-        and creates it's copy in Done list"""
-        done_props = await self._client.pages.retrieve(id)
-        new_page = await self._client.pages.create(
-            parent={'database_id': DONE_LIST_ID},
-            properties=done_props['properties'])
-        await self.archive_page(id)
-        return new_page['id']
-
-    async def today_calendar_events(self):
+    async def get_calendar_events(self):
         events = []
         async for page in async_iterate_paginated_api(
             self._client.databases.query,
@@ -84,18 +74,19 @@ class Notion():
         ):
             event = {}
             props = page["properties"]
-            if props["Name"]["title"]:
-                event['title'] = props["Name"]["title"][0]['plain_text']
-                date = props["Date"]['date']
-                if date:
-                    event['start'] = datetime.fromisoformat(date['start'])
-                    event['end'] = date['end']
-                    if event['end']:
-                        event['end'] = datetime.fromisoformat(event['end'])
-                    events.append(event)
+            date = props["Date"]['date']
+            title = props["Name"]["title"]
+            if title and date:
+                event['title'] = title[0]['plain_text']
+                event['id'] = page['id']
+                event['start'] = datetime.fromisoformat(date['start'])
+                event['end'] = date['end']
+                if event['end']:
+                    event['end'] = datetime.fromisoformat(event['end'])
+                events.append(event)
         return events
 
-    async def current_tasks(self) -> dict[str, str]:
+    async def get_current_tasks(self) -> dict[str, str]:
         tasks = {}
         async for page in async_iterate_paginated_api(
             self._client.databases.query, database_id=CURRENT_TASKS_ID

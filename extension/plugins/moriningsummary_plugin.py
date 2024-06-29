@@ -119,8 +119,8 @@ class MorningSummary(AbstractPlugin):
         message.append(choice(pool))
 
     async def morning_message(self, *args) -> ActionResult:
-        calendar = await self._notion.today_calendar_events()
-        tasks = await self._notion.current_tasks()
+        calendar = await self._notion.get_calendar_events()
+        tasks = await self._notion.get_current_tasks()
         tasks = list(tasks.values())
         message_data = self._gather_base_summary(calendar, tasks)
         self._say_goodmorning(message_data)

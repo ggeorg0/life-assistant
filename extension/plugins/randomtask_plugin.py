@@ -8,17 +8,16 @@ from extension.exttypes import ActionT, CommandBindingsT, EventsScheduleT
 from tools import protect_for_html
 from mynotion import Notion
 
+
 class RandomCurrentTask(AbstractPlugin):
     __slots__ = (
         "_last_task_id",
         "_last_task_name",
-        "_last_created_in_done",
         "_notion"
     )
     # page_id of last chosen taks
     _last_task_id: str | None
     _last_task_name: str
-    _last_created_in_done: str | None
 
     def __init__(self) -> None:
         super().__init__(name="RandomCurrentTask")
@@ -26,8 +25,8 @@ class RandomCurrentTask(AbstractPlugin):
         self._notion = Notion()
 
     async def random_current_task(self, *args) -> ActionResult:
-        tasks = await self._notion.current_tasks()
-        task_id, task_title = choice(list(tasks.items()))
+        tasks = await self._notion.get_current_tasks()
+        task_id, task_title = choice(tuple(tasks.items()))
         self._last_task_id = task_id
         self._last_task_name = task_title
         return ActionResult(
@@ -36,11 +35,10 @@ class RandomCurrentTask(AbstractPlugin):
 
     async def complete_last_task(self, *args) -> ActionResult:
         if self._last_task_id:
-            self._last_created_in_done = await \
-                self._notion.move_to_done(self._last_task_id)
-            message = f"The task \"{self._last_task_name}\" is marked as completed!"
+            await self._notion.archive_page(self._last_task_id)
+            message = f"The task \"{self._last_task_name}\" is archived!"
         else:
-            message = "There are no last task!"
+            message = "There are no last random task!"
         return ActionResult(
             message=protect_for_html(message)
         )
@@ -48,11 +46,9 @@ class RandomCurrentTask(AbstractPlugin):
     async def doagain_last_task(self, *args) -> ActionResult:
         if self._last_task_id:
             await self._notion.unarchive_page(self._last_task_id)
-            if self._last_created_in_done:
-                await self._notion.archive_page(self._last_created_in_done)
             message = "The task is back!"
         else:
-            message = "There are no last task!"
+            message = "There are no last random task!"
         return ActionResult(message=message)
 
     def user_commands(self) -> CommandBindingsT:

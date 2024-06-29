@@ -10,7 +10,6 @@ from telegram.ext import (
     filters,
     Defaults,
 )
-
 from notion_client import APIErrorCode, APIResponseError
 
 from extension import ExtensionLoader
@@ -18,9 +17,9 @@ from mynotion import Notion
 from tools import protect_for_html, validate_user
 from config import (
     BOT_TOKEN,
-    TRY_SEND_MAXNUM,
+    TRY_SEND_LIMIT,
     TRY_SEND_INIT_DELAY,
-    TIMEZONE
+    TIMEZONE,
 )
 
 UNAVAILABLE_ERR = "Service Unavailable Err, request will be send again later"
@@ -40,7 +39,7 @@ nnotion: Notion
 async def add_to_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     timing = TRY_SEND_INIT_DELAY
-    for _ in range(TRY_SEND_MAXNUM):
+    for _ in range(TRY_SEND_LIMIT):
         try:
             task_text = update.effective_message.text
             safe_text = protect_for_html(task_text)
@@ -79,3 +78,4 @@ if __name__ == "__main__":
     app.add_handler(MessageHandler(filters.TEXT, add_to_inbox, block=False))
 
     app.run_polling()
+
