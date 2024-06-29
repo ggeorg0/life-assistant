@@ -33,10 +33,10 @@ DONE_LIST_ID = load_env_var("DONE_LIST_ID")
 
 # max number of tries to send task to the Notion
 # ! Note: time between tries grows exponentially
-TRY_SEND_LIMIT = 10
+TRY_SEND_MAXNUM = 10
 # Initital time between unsuccessufl tries of send task to the Notion
 # ! Note: time between tries grows exponentially
-INITIAL_SEND_TIMING = 30
+TRY_SEND_INIT_DELAY = 30
 
 PAGE_SIZE = 25
 

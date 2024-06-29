@@ -18,8 +18,8 @@ from mynotion import Notion
 from tools import protect_for_html, validate_user
 from config import (
     BOT_TOKEN,
-    TRY_SEND_LIMIT,
-    INITIAL_SEND_TIMING,
+    TRY_SEND_MAXNUM,
+    TRY_SEND_INIT_DELAY,
     TIMEZONE
 )
 
@@ -39,8 +39,8 @@ nnotion: Notion
 @validate_user
 async def add_to_inbox(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    timing = INITIAL_SEND_TIMING
-    for _ in range(TRY_SEND_LIMIT):
+    timing = TRY_SEND_INIT_DELAY
+    for _ in range(TRY_SEND_MAXNUM):
         try:
             task_text = update.effective_message.text
             safe_text = protect_for_html(task_text)
