@@ -125,7 +125,7 @@ class PluginManager(AbstractPlugin):
         if name == self.name:
             return ActionResult(f"You cannot turn off {self.name}")
         self._get_plugin(name).disable()
-        return ActionResult(f"[{name}] is disabled now")
+        return ActionResult(f"\"{name}\" is disabled now")
 
     async def list_plugins(self) -> ActionResult:
         """User command for listing loaded plugins"""

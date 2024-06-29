@@ -96,7 +96,7 @@ class UniSchedule(AbstractPlugin):
             message_line = protect_for_html(message_line)
             message_line = textwrap.wrap(message_line, width=38,
                                          subsequent_indent=' '*17)
-            # current timeline
+            # Print current timeline
             if (datetime.now(TIMEZONE) < dt_from_time(ptime) and timeline_flag):
                 message_line.insert(0, protect_for_html('>' + '- '*18 + '<'))
                 timeline_flag = False
