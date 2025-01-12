@@ -1,39 +1,12 @@
 # Life Assistant Bot
 
-Life Assistant Bot is a Telegram bot designed to help you manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify code of this project to your needs. 
+Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify the code of this project to suit your needs.
 
 ## Features
 
 - **Task Management**: Add tasks to your Notion inbox directly from Telegram.
 - **Plugin System**: Extend the bot's functionality with plugins. Almost all the functionality is implemented through plugins. And you don't even need to know how telegram API works.
 - **Daily and Monthly Events**: Schedule daily and monthly events using plugins. 
-
-## Project Structure
-
-```
-.
-├── bot.py      # the main bot file 
-├── config.py   # config file values loaded from "./.env" by default
-├── extension/      # code for plugins and plugins itself
-│   ├── __init__.py
-│   ├── abstractplugin.py   # abstract class for all user-defined plugins 
-│   ├── actionresult.py
-│   ├── extensionloader.py
-│   ├── exttypes.py
-│   ├── plgloader.py
-│   ├── plgmanager.py
-│   └── plugins/        # user-defined plugins 
-│       ├── cleanup_plugin.py
-│       ├── inboxmanage_plugin.py
-│       ├── moriningsummary_plugin.py
-│       ├── randomtask_plugin.py
-│       ├── timer_plugin.py
-│       └── uni_schedule_plugin.py
-├── mynotion.py     # notion integrations
-├── README.MD       
-├── requirements.txt
-└── tools.py
-```
 
 ## Getting Started
 
@@ -76,7 +49,7 @@ For other cases use `/help` to see the list of available commands from all plugi
 
 The Life Assistant Bot features a flexible plugin system that allows you to extend its functionality. Plugins can define multiple user commands, daily events, monthly events, and single events. 
 
-Moreover each event or user command could spawn other single/daily/monthly events.
+Moreover, each event or user command could spawn other single/daily/monthly events.
 
 ### Plugins available by default  
 
@@ -89,20 +62,20 @@ Here are some of the available plugins:
 - **Timer Plugin**: Set timers and get notifications when they expire.
 - **Uni Schedule Plugin**: Manage your university schedule.
 
-You can delete or modify each of this plugins without breaking the bot.
+You can delete or modify each of these plugins without breaking the bot.
 
 ### Adding a new plugin
 
 Each plugin is a Python class that inherits from the `AbstractPlugin` class defined in `extension/abstractplugin.py`
 
-Plugin must implement the following abstract methods:
+A plugin must implement the following abstract methods:
 - `user_commands`: Defines user commands like `/command` and corresponding actions.
 - `daily_events`: Defines daily scheduled events.
 - `monthly_events`: Defines monthly scheduled events.
 - `disordered_events`: Defines single events that can spawn other single events.
-- `help`: Provides help information for the plugin's commands and gathered in common `/help`
+- `help`: Provides help information for the plugin's commands, which is accessible via `/help`
 
-Also the plugin filename must ends with `_plugin.py` and stored in `extension/plugins/` directory.
+The plugin filename must end with `_plugin.py` and stored in `extension/plugins/` directory.
 
 ### Plugin example
 
@@ -163,6 +136,35 @@ class CalendarCleanupPlugin(AbstractPlugin):
     def disordered_events(self) -> EventsScheduleT:
         # no single events
         return ()
+```
+
+## Project Structure
+
+If you want to customize the bot beyond plugins, you can modify the core logic. Here the project structure to help you:
+
+```
+.
+├── bot.py      # the main bot file 
+├── config.py   # config file values loaded from "./.env" by default
+├── extension/      # code for plugins and plugins itself
+│   ├── __init__.py
+│   ├── abstractplugin.py   # abstract class for all user-defined plugins 
+│   ├── actionresult.py
+│   ├── extensionloader.py
+│   ├── exttypes.py
+│   ├── plgloader.py
+│   ├── plgmanager.py
+│   └── plugins/        # user-defined plugins 
+│       ├── cleanup_plugin.py
+│       ├── inboxmanage_plugin.py
+│       ├── moriningsummary_plugin.py
+│       ├── randomtask_plugin.py
+│       ├── timer_plugin.py
+│       └── uni_schedule_plugin.py
+├── mynotion.py     # notion integrations
+├── README.MD       
+├── requirements.txt
+└── tools.py
 ```
 
 ## Acknowledgements
