@@ -1,6 +1,8 @@
 # Life Assistant Bot
 
-Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify the code of this project to suit your needs.
+Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify the code of this project to suit your needs. Feel free to fork it.
+
+**⚠️ This project is archived because I no longer use Notion.**  
 
 ## Features
 
