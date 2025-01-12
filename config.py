@@ -29,7 +29,6 @@ INBOX_DATABASE_ID = load_env_var("INBOX_DATABASE_ID")
 CALENDAR_DATABASE_ID = load_env_var("CALENDAR_DATABASE_ID")
 CURRENT_TASKS_ID = load_env_var("CURRENT_TASKS_ID")
 UNI_SCHEDULE = load_env_var("UNI_SCHEDULE_ID")
-DONE_LIST_ID = load_env_var("DONE_LIST_ID")
 
 # max number of tries to send task to the Notion
 # ! Note: time between tries grows exponentially
