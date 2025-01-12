@@ -8,31 +8,27 @@ from tools import protect_for_html, dt_from_time, time_from_args
 from config import MORNING_MESSAGE_TIME
 
 GOOD_MORNING_PHRASES = [
-    'Доброе утро!',
-    'С добрым утром!',
-    'Подъем!',
-    'Guten morgen!'
+    'Good morning!',
+    'New day!',
+    'Guten morgen!',
 ]
 DEFAULT_WISHES = [
-    "Хорошего дня!",
-    "Отличной работы",
-    "Have a nice day!"
+    "Keep going!",
+    "Have a nice day!",
 ]
 HARDWORK_WISHES = [
     "За работу блин!",
     "Вперед на завод!!!",
-    "Работаем + жоска ботаем"
+    "Работаем!",
 ]
 WEEKENDS_WISHES = [
-    "Выходные! Выходные! Я забыл прооо выходные",
+    "Have a good weekends",
     "Хороших выходных!",
-    "Не забывай отдыхать!"
+    "Не забывай отдыхать!",
 ]
 MONDAY_WISHES = [
-    "С понедельничком!",
+    "С понедельником!",
     "С началом рабочей недели!",
-    "Это понедельник!",
-    "Cнова понедельник!"
 ]
 
 

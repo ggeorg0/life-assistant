@@ -7,7 +7,6 @@ from notion_client.helpers import async_iterate_paginated_api, is_full_page
 from config import (
     INTEGRATION_TOKEN,
     INBOX_DATABASE_ID,
-    DONE_LIST_ID,
     CALENDAR_DATABASE_ID,
     CURRENT_TASKS_ID,
     PAIR_SCHEDULE,
