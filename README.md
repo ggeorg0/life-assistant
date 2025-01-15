@@ -1,6 +1,15 @@
 # Life Assistant Bot
 
-Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify the code of this project to suit your needs. Feel free to fork it.
+Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, calendar events, and other activities using Notion. You can copy and modify the code of this project to suit your needs.
+
+## Motivation
+From my experience, the Notion mobile app works badly without an internet connection: if you try to add anything to your collections or edit some items, the information sometimes gets completely wiped out. The app is also very slow. As a result, it is very frustrating to even touch Notion on mobile.
+
+On the other hand, Telegram allows you to send messages if you are offline. The app will try to resend them multiple times until the connection is restored. And the bot uses this advantage.
+
+Furthermore, if you are adding some tasks through the bot and the Notion service is offline for some reason, the bot will try to resend the information later (with increasing time between retries). This significantly increases the chances for your data to be safely delivered.
+
+In addition, the bot offers extra features such as sending a daily summary of current tasks every morning and providing the university schedule.
 
 **⚠️ This project is archived because I no longer use Notion.**  
 
@@ -10,13 +19,27 @@ Life Assistant Bot is a Telegram bot designed to help me manage my daily tasks, 
 - **Plugin System**: Extend the bot's functionality with plugins. Almost all the functionality is implemented through plugins. And you don't even need to know how telegram API works.
 - **Daily and Monthly Events**: Schedule daily and monthly events using plugins. 
 
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/54f4c77a-ae69-464f-9564-48d957a0de23"  width="360" >
+</div>
+
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.8+
-- Notion account
+- Notion inegration token
 - Telegram bot token
+
+In the Notion I have next databases:
+- Inbox
+- Calendar
+- Current tasks
+- University schedule
+
+In the Notion you need to add your bot ("connection") for each database. 
+
+And you also need to add database ids in the `.env` file.
 
 ### Installation
 
@@ -43,9 +66,13 @@ Run the bot using the following command:
 python bot.py
 ```
 
-Send **any text message** to the bot to **add it as a task to your Notion inbox**.
+Send **any text message** to the bot to **add it as a task to your Notion inbox**. Any arbitrary text message will be threated like task.
 
-For other cases use `/help` to see the list of available commands from all plugins  
+For other cases use `/help` to see the list of available commands from all plugins
+
+<div align="center">
+    <img src="https://github.com/user-attachments/assets/7cd01ab9-3249-4424-b371-8ec8b3a8a377"  width="360">
+</div>
 
 ## Plugin System
 
@@ -145,7 +172,7 @@ class CalendarCleanupPlugin(AbstractPlugin):
 If you want to customize the bot beyond plugins, you can modify the core logic. Here the project structure to help you:
 
 ```
-.
+life-assistant
 ├── bot.py      # the main bot file 
 ├── config.py   # config file values loaded from "./.env" by default
 ├── extension/      # code for plugins and plugins itself
